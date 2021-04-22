@@ -1,0 +1,8 @@
+
+2020-04-16 10:40:15
+SQLSTATE[HY000] [1049] Unknown database 'tests'
+=========================================================
+
+2020-04-16 10:43:59
+SQLSTATE[HY000] [1045] Access denied for user 'roots'@'localhost' (using password: YES)
+=========================================================

@@ -1,0 +1,6 @@
+[16-Apr-2020 00:42:28 Europe/Berlin] PHP Fatal error:  Uncaught Error: Class 'HomeController' not found in D:\Source Codes\PHP\aweklin_mvc\framework\core\Router.php:39
+Stack trace:
+#0 D:\Source Codes\PHP\aweklin_mvc\framework\bootstrap.php(63): Router::route(Array)
+#1 D:\Source Codes\PHP\aweklin_mvc\index.php(22): require_once('D:\\Source Codes...')
+#2 {main}
+  thrown in D:\Source Codes\PHP\aweklin_mvc\framework\core\Router.php on line 39
