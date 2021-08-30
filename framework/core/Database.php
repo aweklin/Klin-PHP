@@ -875,22 +875,19 @@ class Database implements IDatabase {
         $arrayKeyConditions = 'conditions';
         
         if ($parameters) {
-			// check for conditions
+                // check for conditions
             if (array_key_exists($arrayKeyConditions, $parameters)) {
                 if (is_array($parameters[$arrayKeyConditions])) {
                     foreach($parameters[$arrayKeyConditions] as $condition) {
                         if (\in_array(trim($condition), [Database::AND, Database::OR])) {
-                            if (!Str::contains($whereClause, $condition))
-                                $whereClause .= $condition;
+                            $whereClause .= $condition;
                         } else {
-                            if (!Str::contains($whereClause, $condition))
-                                $whereClause .= ' ' . $condition . PHP_EOL;
+                            $whereClause .= ' ' . $condition . PHP_EOL;
                         }
                     }
                     $whereClause = trim($whereClause);
                 } else {
-                    if (!Str::contains($whereClause, $condition))
-                        $whereClause = $parameters[$arrayKeyConditions];
+                    $whereClause = $parameters[$arrayKeyConditions];
                 }
 
                 if ($whereClause) {
