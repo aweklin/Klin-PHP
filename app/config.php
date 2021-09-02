@@ -54,7 +54,7 @@ define('URL_PUBLIC_IMG', URL_PUBLIC . 'img/');
 
 
 // layout constants
-define('SITE_TITLE', 'Autism Tracker - Admin Console');
+define('SITE_TITLE', 'Site/App Title Goes Here in the \app\config.php file');
 define('LAYOUT_DEFAULT', 'layout');
 define('APP_MESSAGE', $appDevelopmentDirectoryName . 'AppMessage');
 define('APP_MESSAGE_TYPE', $appDevelopmentDirectoryName . 'AppMessageType');

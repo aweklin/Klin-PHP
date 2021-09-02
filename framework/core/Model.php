@@ -198,7 +198,7 @@ class Model implements IDatabase {
      * 
      * @return Model
      */
-    public function addRelationship(string $type, string $primaryTableName = '', string $primaryFieldName = '', string $foreignTableName, string $foreignFieldName, string $orderBy = '') : Model {
+    public function addRelationship(string $type, string $primaryTableName = '', string $primaryFieldName = '', string $foreignTableName = '', string $foreignFieldName = '', string $orderBy = '') : Model {
         if (Str::isEmpty($primaryTableName)) $primaryTableName = $this->_table;
         if (Str::isEmpty($primaryFieldName)) $primaryFieldName = $this->_idField;
 
