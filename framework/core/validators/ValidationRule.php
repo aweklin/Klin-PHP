@@ -19,7 +19,7 @@ class ValidationRule {
      * @param mixed $value The actual value to be validated against the set of rules passed.
      * @param array $rules Defines all the validation rules to be run.
      */
-    public function __construct(string $field, $value = null, array $rules) {
+    public function __construct(string $field, $value = null, array $rules = []) {
         $this->_field = $field;
         $this->_value = $value;
         $this->_rules = $rules;

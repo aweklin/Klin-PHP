@@ -60,6 +60,7 @@ final class Str {
      * @return bool
      */
     public static function contains(string $string, string $search) : bool {
+        if (self::isEmpty($string)) return false;
         if ($string) $string = trim($string);
         return mb_strpos($string, $search) !== false;
     }
@@ -72,7 +73,7 @@ final class Str {
      * @return string
      */
     public static function toLower(string $string) : string {
-        return mb_strtolower($string);
+        return ($string ? mb_strtolower($string) : '');
     }
 
     /**
@@ -83,7 +84,7 @@ final class Str {
      * @return string
      */
     public static function toUpper(string $string) : string {
-        return mb_strtoupper($string);
+        return ($string ? mb_strtoupper($string) : '');
     }
 
     /**
@@ -152,6 +153,34 @@ final class Str {
 	public static function isValidEmail($email) : bool {
 		return filter_var($email, FILTER_VALIDATE_EMAIL);
 	}
+
+    /**
+     * Confirms if the value supplied is a strong password.
+     * A strong password must have at least one upper case, lower case, number and special character with the minimum length specified.
+     * 
+     * @param string $password The given password to test its strength.
+     * @param string $minimumLength Specifies the minimum password length. The default is 6.
+     * 
+     * @return bool
+     */
+    public static function isStrongPassword($password, int $minimumLength = 6) : bool {
+        if (self::isEmpty($password)) return false;
+
+        $isUpperCaseTestPassed  = preg_match('@[A-Z]@', $password);
+        $isLowerCaseTestPassed  = preg_match('@[a-z]@', $password);
+        $isNumberTestPassed     = preg_match('@[0-9]@', $password);
+        $isSpecialCharacterPassed=preg_match('@[^\w]@', $password);
+
+        return 
+            (
+                    !$isUpperCaseTestPassed 
+                    || !$isLowerCaseTestPassed 
+                    || !$isNumberTestPassed 
+                    || !$isSpecialCharacterPassed 
+                    || mb_strlen($password) < $minimumLength 
+                ? false : true
+            );
+    }
 
 	/**
 	* Generate a random UUID version 4

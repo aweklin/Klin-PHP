@@ -203,7 +203,7 @@ class Database implements IDatabase {
                     $errorInfo = print_r($this->_query->errorInfo()['2'], true);
                     $this->_errorMessage = (IS_DEVELOPMENT ? 'Error executing query: ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo : USER_FRIENDLY_ERROR_MESSAGE);
                     if (!IS_DEVELOPMENT) {
-                        $this->_logger->log('Error executing ' . PHP_EOL . $sql . PHO_EOL . 'Reason: ' . $errorInfo);
+                        $this->_logger->log('Error executing ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo);
                     }
                 }
             }
@@ -326,7 +326,7 @@ class Database implements IDatabase {
                     $errorInfo = print_r($this->_query->errorInfo()['2'], true);
                     $this->_errorMessage = (IS_DEVELOPMENT ? 'Error executing query: ' . PHP_EOL . $procedureName . PHP_EOL . 'Reason: ' . $errorInfo : USER_FRIENDLY_ERROR_MESSAGE);
                     if (!IS_DEVELOPMENT) {
-                        $this->_logger->log('Error executing ' . PHP_EOL . $procedureName . PHO_EOL . 'Reason: ' . $errorInfo);
+                        $this->_logger->log('Error executing ' . PHP_EOL . $procedureName . PHP_EOL . 'Reason: ' . $errorInfo);
                     }
                 }
             }
@@ -496,7 +496,7 @@ class Database implements IDatabase {
                     $errorInfo = print_r($this->_query->errorInfo()['2'], true);
                     $this->_errorMessage = (IS_DEVELOPMENT ? 'Error executing query: ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo : USER_FRIENDLY_ERROR_MESSAGE);
                     if (!IS_DEVELOPMENT) {
-                        $this->_logger->log('Error executing ' . PHP_EOL . $sql . PHO_EOL . 'Reason: ' . $errorInfo);
+                        $this->_logger->log('Error executing ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo);
                     }
                 }
             }
@@ -597,7 +597,7 @@ class Database implements IDatabase {
                 $errorInfo = print_r($queryResult->errorInfo()['2'], true);
                 $this->_errorMessage = (IS_DEVELOPMENT ? 'Error executing query: ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo : USER_FRIENDLY_ERROR_MESSAGE);
                 if (!IS_DEVELOPMENT) {
-                    $this->_logger->log('Error executing ' . PHP_EOL . $sql . PHO_EOL . 'Reason: ' . $errorInfo);
+                    $this->_logger->log('Error executing ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo);
                 }
             }
         }
@@ -665,7 +665,7 @@ class Database implements IDatabase {
                         $errorInfo = print_r($this->_query->errorInfo()['2'], true);
                         $this->_errorMessage = (IS_DEVELOPMENT ? 'Error executing query: ' . PHP_EOL . $childSql . PHP_EOL . 'Reason: ' . $errorInfo : USER_FRIENDLY_ERROR_MESSAGE);
                         if (!IS_DEVELOPMENT) {
-                            $this->_logger->log('Error executing ' . PHP_EOL . $childSql . PHO_EOL . 'Reason: ' . $errorInfo);
+                            $this->_logger->log('Error executing ' . PHP_EOL . $childSql . PHP_EOL . 'Reason: ' . $errorInfo);
                         }
                     }
                 }
