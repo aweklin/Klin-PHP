@@ -3,22 +3,29 @@
 namespace App\Src\Models;
 
 use Framework\Core\{Database, Model};
-use Framework\Infrastructure\{Cookie, Session, Security};
+use Framework\Infrastructure\{BcryptPasswordHasher, Cookie, Session, Security};
 use Framework\Core\Validators\{Validator, ValidationRule};
 use Framework\Core\Validators\Rules\{RequiredRule, MinimumLengthRule, MaximumLengthRule, UniqueRule, EmailRule, EqualRule};
 use App\Src\Models\UserSession;
+use Framework\Decorator\PasswordEncryptor;
+use IPasswordVerifier;
 
 class User extends Model {
 
     var $hiddenFields = ['password'];
 
     private static $_currentLoggedInUser = null;
-    private static $_isLoggedIn = false;    
+    private static $_isLoggedIn = false;
+
+    private PasswordEncryptor $_passwordEncryptor;
 
     public function __construct($idOrUsername = '') {
         parent::__construct();
 
         self::$_isLoggedIn = false;
+
+        // choose password has algorithm
+        $this->_passwordEncryptor = new BcryptPasswordHasher(12);
 
         if ($idOrUsername) {
             $userInfo = null;
@@ -57,10 +64,21 @@ class User extends Model {
         return $this->where('username', '=', $this->username)->find();
     }
 
-    public function login($rememberMe = false) {
+    public function login(string $password, bool $rememberMe = false) {
+        if (!$this->_idField) {
+            $this->_errorMessage = 'Please call the findByUsername method first.';
+            return;
+        }
+        // verify password
+        $encryptor = (object) $this->_passwordEncryptor;
+        if ($encryptor instanceof IPasswordVerifier && !$encryptor->isVerified($password, $this->password)) {
+            $this->_errorMessage = 'Invalid password.';
+            return;
+        }
+
         Session::set(SECURITY_CURRENT_LOGGED_IN_USER_ID, $this->{$this->_idField});
         self::$_isLoggedIn = true;
-        //self::$_currentLoggedInUser = new self(Session::get(SECURITY_CURRENT_LOGGED_IN_USER_ID));
+        
 
         if ($rememberMe) {
             $hash = md5(uniqid() . rand(0, 100));
@@ -193,7 +211,7 @@ class User extends Model {
         unset($validator);
 
         // create account
-        $this->password = Security::encrypt($this->password);
+        $this->password = $this->_passwordEncryptor->encrypt($this->password);
         $this->save();
     }
 
@@ -224,7 +242,7 @@ class User extends Model {
         }
 
         $this->id       = $id;
-        $this->password = Security::encrypt($password);
+        $this->password = $this->_passwordEncryptor->encrypt($this->password);
         $this->save();
     }
 }

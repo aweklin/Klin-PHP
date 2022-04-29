@@ -189,6 +189,7 @@ class Database implements IDatabase {
                 if ($parameters && count($parameters) > 0) {
                     foreach($parameters as $parameter) {
                         if (is_array($parameter)) continue;
+                        if (empty($parameter)) continue;
                         if (Str::contains(Str::toLower($parameter), 'join')) continue;
                         $this->_query->bindValue($parameterId, $parameter);
                         $parameterId++;
@@ -469,6 +470,7 @@ class Database implements IDatabase {
                                         if (!$childrenRecord) 
                                             $tempResultModels[$primaryTableSingular][$foreignTable] = null;
                                         else {
+                                            $tempResultModels[$primaryTableSingular][$foreignTable] = [];
                                             foreach($childrenRecord as $childRecord) {
                                                 $childRecordData = $childRecord[$foreignTable];
 

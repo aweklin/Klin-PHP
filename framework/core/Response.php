@@ -140,7 +140,7 @@ final class Response {
      */
     public function view(string $viewName = '') {
         if ($viewName) {
-            $viewNameArray  = explode('/', $viewName);
+            $viewNameArray  = explode((Str::contains($viewName, '.') ? '.' : '/'), $viewName);
             $viewPath = implode(DS, $viewNameArray);
         } else {
             $viewName = $this->_viewName;

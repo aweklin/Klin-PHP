@@ -181,6 +181,22 @@ class Model implements IDatabase {
         return $this;
     }
 
+    public function withOne(string $foreignTableName, string $foreignFieldName = '', string $primaryFieldName = 'id') : Model {
+        if(Str::isEmpty($foreignTableName)) throw new Exception("Foreign field table name is required for {$this->_table} in order to use the withOne method.");
+        if(Str::isEmpty($foreignFieldName)) 
+            $foreignFieldName = "{$foreignTableName}_id";
+
+        return $this->addRelationship(Database::RELATIONSHIP_CHILD, $this->_table, $foreignFieldName, $foreignTableName, $primaryFieldName);
+    }
+
+    public function withMany(string $foreignTableName, string $foreignFieldName = '', string $primaryFieldName = 'id') : Model {
+        if(Str::isEmpty($foreignTableName)) throw new Exception("Foreign field table name is required for {$this->_table} in order to use the withMany method.");
+        if(Str::isEmpty($foreignFieldName)) 
+            $foreignFieldName = "{$foreignTableName}_id";
+
+        return $this->addRelationship(Database::RELATIONSHIP_CHILDREN, $this->_table, $primaryFieldName, $foreignTableName, $foreignFieldName);
+    }
+
     public function join(string $clause) : Model {
         array_push($this->_joins, $clause);
 

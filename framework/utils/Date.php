@@ -23,6 +23,10 @@ final class Date {
     const FORMAT_DMY_HYPHEN_SEPARATED_WITH_TIME = 'd-m-Y H:i:s';
     const FORMAT_DMY_SPACE_SEPARATED_WITH_TIME = 'd m Y H:i:s';
     const FORMAT_YMD = 'Y-m-d';
+    const FORMAT_MMM_YYYY_HYPHEN_SEPARATED = 'M-Y';
+    const FORMAT_MMM_YY_HYPHEN_SEPARATED = 'M-y';
+    const FORMAT_MMM_YYYY = 'M Y';
+    const FORMAT_MMM_YY = 'M y';
     const FORMAT_YMD_WITH_TIME = 'Y-m-d H:i:s';
     const FORMAT_DDMMMYYYY_SPACE_SEPARATED = 'd M Y';
     const FORMAT_DDMMMYYYY_SPACE_SEPARATED_WITH_TIME = 'd M Y H:i:s';
@@ -262,6 +266,10 @@ final class Date {
             self::FORMAT_DMY_HYPHEN_SEPARATED_WITH_TIME,
             self::FORMAT_DMY_SPACE_SEPARATED_WITH_TIME,
             self::FORMAT_YMD,
+            self::FORMAT_MMM_YYYY,
+            self::FORMAT_MMM_YY,
+            self::FORMAT_MMM_YYYY_HYPHEN_SEPARATED,
+            self::FORMAT_MMM_YY_HYPHEN_SEPARATED,
             self::FORMAT_YMD_WITH_TIME,
             self::FORMAT_DDMMMYYYY_SPACE_SEPARATED,
             self::FORMAT_DDMMMYYYY_SPACE_SEPARATED_WITH_TIME

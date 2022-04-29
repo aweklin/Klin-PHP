@@ -30,21 +30,22 @@ class AccountController extends Controller {
                 $this->response->json(true, $user->getErrorMessage());
                 return;
             }
-            if ($userInfo && Security::isVerified($this->request->get('password'), $userInfo->password)) {
-                $rememberMe = $this->request->get('remember_me');                    
-                $rememberMe = ($rememberMe ? true : false);
-                
-                $user->login($rememberMe);
-                if ($user->hasError()) {
-                    $this->response->json(true, $user->getErrorMessage());
-                } else {
-                    $this->response->json(false, 'Login successful');
+            $rememberMe = $this->request->get('remember_me');                    
+            $rememberMe = ($rememberMe ? true : false);
+            
+            if ($userInfo && $userInfo->login($this->request->get('password'), $rememberMe)) {
+                if ($userInfo->hasError()) {
+                    $this->response->json(true, $userInfo->getErrorMessage());
+                    return;
                 }
-            } else {
-                $this->response->json(true, 'Incorrect username or password.');
+
+                $this->response->json(false, 'Login successful');
+                return;                
             }
+                
+            $this->response->json(true, 'Incorrect username or password.');            
         } else {
-            $this->response->view('account/login');
+            $this->response->view('account.login');
         }
     }
 

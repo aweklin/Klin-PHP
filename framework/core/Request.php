@@ -80,7 +80,7 @@ final class Request {
             $this->_checkForMissingItemsInRequest($this->_requestObject, $expectedItem);
 
         if (!$returnDataAsArray) 
-            return $request;
+            return $this->_requestObject;
         else
             return $this->_data;
     }
@@ -163,7 +163,7 @@ final class Request {
                 $postData = \json_decode($item, true);
             }
         }
-        if (!$postData) {   // this may be coming from api client
+        if (!$postData) {   // this may be coming from api client like PostMan
             $postData = file_get_contents("php://input");
             if ($postData) {
                 $postData = json_decode($postData);

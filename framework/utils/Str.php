@@ -88,20 +88,6 @@ final class Str {
     }
 
     /**
-     * Generates a random but strong password based on the given length.
-     * 
-     * @param int $length Indicates the length of string to generate
-     * 
-     * @return string
-     */
-	public static function generateStrongPassword(int $length = 8) : string {
-		$chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*_";
-		$password = mb_substr(str_shuffle($chars), 0, $length);
-		
-		return $password;
-	}
-	
-    /**
      * Generates a random (alphanumeric) string based on the given length.
      * 
      * @param int $length Indicates the length of string to generate
@@ -154,34 +140,6 @@ final class Str {
 		return filter_var($email, FILTER_VALIDATE_EMAIL);
 	}
 
-    /**
-     * Confirms if the value supplied is a strong password.
-     * A strong password must have at least one upper case, lower case, number and special character with the minimum length specified.
-     * 
-     * @param string $password The given password to test its strength.
-     * @param string $minimumLength Specifies the minimum password length. The default is 6.
-     * 
-     * @return bool
-     */
-    public static function isStrongPassword($password, int $minimumLength = 6) : bool {
-        if (self::isEmpty($password)) return false;
-
-        $isUpperCaseTestPassed  = preg_match('@[A-Z]@', $password);
-        $isLowerCaseTestPassed  = preg_match('@[a-z]@', $password);
-        $isNumberTestPassed     = preg_match('@[0-9]@', $password);
-        $isSpecialCharacterPassed=preg_match('@[^\w]@', $password);
-
-        return 
-            (
-                    !$isUpperCaseTestPassed 
-                    || !$isLowerCaseTestPassed 
-                    || !$isNumberTestPassed 
-                    || !$isSpecialCharacterPassed 
-                    || mb_strlen($password) < $minimumLength 
-                ? false : true
-            );
-    }
-
 	/**
 	* Generate a random UUID version 4
 	*
@@ -223,5 +181,17 @@ final class Str {
 	static function removeSpaces($value) : string {
 		return preg_replace('/\s+/', '', $value);
 	}
+
+    static function encodeToBase64(string $string) : string {
+        if (self::isEmpty($string)) return '';
+
+        return base64_encode($string);
+    }
+
+    static function decodeFromBase64(string $encoded, bool $strict = false) : string {
+        if (self::isEmpty($encoded)) return '';
+
+        return base64_decode($encoded, $strict);
+    }
 	
 }
