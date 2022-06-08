@@ -3,7 +3,7 @@
 namespace Framework\Infrastructure;
 
 use Framework\Decorator\PasswordEncryptor;
-use IPasswordVerifier;
+use Framework\Interfaces\IPasswordVerifier;
 
 class Argon2idPasswordHasher extends PasswordEncryptor implements IPasswordVerifier {
 

@@ -1,5 +1,7 @@
 <?php
 
+namespace Framework\Interfaces;
+
 /**
  * Provides the mechanisms to verify a given password.
 */
