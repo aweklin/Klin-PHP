@@ -171,11 +171,12 @@ class Model implements IDatabase {
         return $this->database->getColumns($this->_table);
     }
 
-    public function where(string $field, string $operator, $value = null) : Model {
+    public function where(string $field, mixed $operatorOrValue, mixed $value = null) : Model {
         if ($value === null) {
-            array_push($this->_parameters, "{$field} {$operator}");
+            array_push($this->_parameters, "{$field} = ?");
+            array_push($this->_bindable, $operatorOrValue);
         } else {
-            array_push($this->_parameters, "{$field} {$operator} ?");
+            array_push($this->_parameters, "{$field} {$operatorOrValue} ?");
             array_push($this->_bindable, $value);
         }
         return $this;
@@ -414,9 +415,9 @@ class Model implements IDatabase {
             if (!array_key_exists(self::DEFAULT_FIELD_MODIFIED, $fields) && property_exists($this, self::DEFAULT_FIELD_MODIFIED)) {
                 $fields[self::DEFAULT_FIELD_MODIFIED] = Date::now();
             }
-            if (!array_key_exists(self::DEFAULT_FIELD_DELETED, $fields) && property_exists($this, self::DEFAULT_FIELD_DELETED)) {
-                $fields[self::DEFAULT_FIELD_DELETED] = 0;
-            }
+            // if (!array_key_exists(self::DEFAULT_FIELD_DELETED, $fields) && property_exists($this, self::DEFAULT_FIELD_DELETED)) {
+            //     $fields[self::DEFAULT_FIELD_DELETED] = 0;
+            // }
         } else {
             
             // check for default fields and set their values

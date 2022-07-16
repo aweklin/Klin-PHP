@@ -8,7 +8,7 @@ use Framework\Core\Validators\{Validator, ValidationRule};
 use Framework\Core\Validators\Rules\{RequiredRule, MinimumLengthRule, MaximumLengthRule, UniqueRule, EmailRule, EqualRule};
 use App\Src\Models\UserSession;
 use Framework\Decorator\PasswordEncryptor;
-use IPasswordVerifier;
+use Framework\Interfaces\IPasswordVerifier;
 
 class User extends Model {
 

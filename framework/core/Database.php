@@ -152,10 +152,11 @@ class Database implements IDatabase {
      * 
      * @param string $sql The SQL statement to execute. This can also be a stored procedure, DML or DDL statement.
      * @param array $parameters Values of the parameters used in your $sql variable.
+     * @param array $paramsAndValues Uses named parameters instead of ?
      * 
      * @return Database
      */
-    public function query(string $sql, array $parameters = []) : Database {
+    public function query(string $sql, array $parameters = [], array $paramsAndValues = []) : Database {
         $this->rowCount = 0;
         $this->_errorMessage = '';
         $this->_result = null;
@@ -180,13 +181,20 @@ class Database implements IDatabase {
             $this->_errorMessage = 'Invalid SQL statement';
             return $this;
         }
-
+        
         $this->_errorMessage = '';
         try {
             if ($this->_query = $this->pdo->prepare($sql)) {
                 $parameterId = 1;
 
-                if ($parameters && count($parameters) > 0) {
+                $hasBindedParameters = false;
+                if ($paramsAndValues && count($paramsAndValues) > 0) {
+                    foreach($paramsAndValues as $paramAndValue) {
+                        $this->_query->bindValue(":" . $paramAndValue['field'], $paramAndValue['value']);
+                    }
+                    $hasBindedParameters = true;
+                }
+                if ($parameters && count($parameters) > 0 && !$hasBindedParameters) {
                     foreach($parameters as $parameter) {
                         if (is_array($parameter)) continue;
                         if (empty($parameter)) continue;
@@ -210,7 +218,11 @@ class Database implements IDatabase {
             }
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log($e->getMessage());
+            $this->_logger->log(
+                'Error executing: ' . PHP_EOL . $sql . PHP_EOL . PHP_EOL . 
+                'Parameters: ' . PHP_EOL . print_r($parameters, true) . PHP_EOL . 
+                'Error message: ' . $e->getMessage() . PHP_EOL
+            );
         }
 
         return $this;
@@ -718,11 +730,11 @@ class Database implements IDatabase {
             // prepare the fields and values for insert
             $fieldsString   = '';
             $valuesString   = '';
-            $values         = [];
+            $paramsAndValues= [];
             foreach($fields as $field => $value) {
                 $fieldsString .= '`' . $field . '`,';
-                $valuesString .= '?,';
-                array_push($values, $value);
+                $valuesString .= ":{$field},";
+                array_push($paramsAndValues, ['field' => $field, 'value' => $value]);
             }
             $fieldsString = rtrim($fieldsString, ',');
             $valuesString = rtrim($valuesString, ',');
@@ -730,10 +742,10 @@ class Database implements IDatabase {
             $sql = "INSERT INTO `{$table}` " . PHP_EOL . "({$fieldsString}) " . PHP_EOL . "VALUES ({$valuesString})";
 
             // execute the query
-            $this->query($sql, $values);
+            $this->query($sql, [], $paramsAndValues);
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log($e->getMessage());
+            $this->_logger->log('Insert error: ' . $e->getMessage());
         }
     }
 
@@ -757,21 +769,21 @@ class Database implements IDatabase {
 
             // prepare the fields and values for update
             $fieldsString   = '';
-            $values         = [];
+            $paramsAndValues= [];
             foreach($fields as $field => $value) {
-                $fieldsString .= '`' . $field . '` = ?,';
-                array_push($values, $value);
+                $fieldsString .= '`' . $field . '` = :' . $field . ',';
+                array_push($paramsAndValues, ['field' => $field, 'value' => $value]);
             }
             $fieldsString = rtrim($fieldsString, ',');
 
-            $sql = "UPDATE `{$table}` " . PHP_EOL . "SET {$fieldsString} " . PHP_EOL . "WHERE `{$this->_idField}` = ?";
-            array_push($values, $idValue);
+            $sql = "UPDATE `{$table}` " . PHP_EOL . "SET {$fieldsString} " . PHP_EOL . "WHERE `{$this->_idField}` = :" . $this->_idField;
+            array_push($paramsAndValues, ['field' => $this->_idField, 'value' => $idValue]);
 
             // execute the query
-            $this->query($sql, $values);
+            $this->query($sql, [], $paramsAndValues);
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log($e->getMessage());
+            $this->_logger->log('Insert error: ' . $e->getMessage());
         }
     }
 
@@ -788,12 +800,12 @@ class Database implements IDatabase {
             }
 
             // prepare for delete
-            $values = [];
-            $sql = "DELETE FROM `{$table}` " . PHP_EOL . "WHERE `{$this->_idField}` = ?";
-            array_push($values, $idValue);
-            //echo $sql; dnd($bindable);
+            $paramsAndValues= [];
+            $sql = "DELETE FROM `{$table}` " . PHP_EOL . "WHERE `{$this->_idField}` = :" . $this->_idField;
+            array_push($paramsAndValues, ['field' => $this->_idField, 'value' => $idValue]);
+            
             // execute the query
-            $this->query($sql, $values);
+            $this->query($sql, [], $paramsAndValues);
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
             $this->_logger->log($e->getMessage());
@@ -822,7 +834,8 @@ class Database implements IDatabase {
         $sql = PHP_EOL . "SELECT COUNT({$field}) AS `record_count` FROM `{$table}`{$joinClause}{$whereClause}{$orderClause}{$limitClause}";
         //echo $sql; dnd($bindable);
         // execute and return execution result
-        return intval($this->_execute($sql, $bindable)[0]->record_count);
+        $result = $this->_execute($sql, $bindable);
+        return ($result ? intval($result[0]->record_count) : 0);
     }
 
     private function _read(string $table, array $parameters = []) {        

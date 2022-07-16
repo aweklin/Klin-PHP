@@ -10,7 +10,7 @@ class AccountController extends Controller {
 
     public function login() {
         if (User::isLoggedIn()) {
-            Response::redirect('');
+            Response::redirect(DEFAULT_REDIRECT_AFTER_LOGIN);
             exit;
         }
 
@@ -33,7 +33,7 @@ class AccountController extends Controller {
             $rememberMe = $this->request->get('remember_me');                    
             $rememberMe = ($rememberMe ? true : false);
             
-            if ($userInfo && $userInfo->login($this->request->get('password'), $rememberMe)) {
+            if ($userInfo && $user->login($this->request->get('password'), $rememberMe)) {
                 if ($userInfo->hasError()) {
                     $this->response->json(true, $userInfo->getErrorMessage());
                     return;
