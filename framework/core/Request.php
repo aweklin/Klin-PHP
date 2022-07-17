@@ -2,6 +2,8 @@
 
 namespace Framework\Core;
 
+use Framework\Core\Validators\ValidationRule;
+use Framework\Core\Validators\Validator;
 use Framework\Utils\{Str, Ary};
 
 /**
@@ -15,8 +17,37 @@ final class Request {
     private $_data = [];
     private $_missingItems = [];
 
+    private array $_validations;
+    private string $_validationErrors = '';
+
     public function __construct() {
+        $this->_validations = [];
         $this->_setRequestData();
+    }
+
+    private function _validateRequest() {
+        $this->_validationErrors = '';
+
+        if (sizeof($this->_data) <= sizeof($this->_missingItems)) return;
+
+        $validations = [];//var_dump($this->_validations);
+        foreach ($this->_validations as $validation) {
+            if (in_array($validation, $this->_missingItems)) continue;
+            array_push($validations, new ValidationRule($validation['field'], $this->get($validation['field']), $validation['rules']));
+        }
+
+        if (!$validations) return;//var_dump($validations[0]->getField());
+        $validator = new Validator($validations);
+        if (!$validator->isValid())
+            $this->_validationErrors = $validator->getValidationErrors();
+    }
+
+    public function getValidationErrors() : string {
+        return $this->_validationErrors;
+    }
+
+    public function hasValidationErrors() : bool {
+        return !Str::isEmpty($this->_validationErrors);
     }
 
     /**
@@ -27,8 +58,15 @@ final class Request {
      * @return bool
      */
     public function isPost(array $expectedItems = []) : bool {
-        if ($expectedItems) {
-            $this->_checkForMissingItemsInRequest($this->_requestObject, $expectedItems);
+        $fieldsExpected = (!$expectedItems ? [] : (Ary::isAssociative($expectedItems) ? array_keys($expectedItems) : $expectedItems));
+        if ($fieldsExpected) {
+            $this->_checkForMissingItemsInRequest($this->_requestObject, $fieldsExpected);
+            if (Ary::isAssociative($expectedItems)) {
+                foreach ($expectedItems as $key => $value) {
+                    array_push($this->_validations, ['field' => $key, 'rules' => $value]);
+                }
+                $this->_validateRequest();
+            }
         }
         return $this->_getRequestMethod() === 'post';
     }
@@ -51,8 +89,15 @@ final class Request {
      * @return bool
      */
     public function isPut(array $expectedItems = []) : bool {
-        if ($expectedItems) {
-            $this->_checkForMissingItemsInRequest($this->_requestObject, $expectedItems);
+        $fieldsExpected = (!$expectedItems ? [] : (Ary::isAssociative($expectedItems) ? array_keys($expectedItems) : $expectedItems));
+        if ($fieldsExpected) {
+            $this->_checkForMissingItemsInRequest($this->_requestObject, $fieldsExpected);
+            if (Ary::isAssociative($expectedItems)) {
+                foreach ($expectedItems as $key => $value) {
+                    array_push($this->_validations, ['field' => $key, 'rules' => $value]);
+                }
+                $this->_validateRequest();
+            }
         }
         return $this->_getRequestMethod() === 'put';
     }
@@ -311,13 +356,13 @@ final class Request {
         // some validations
         $acceptableRequestTypes = ['get', 'post', 'put', 'delete'];
         if (!in_array($type, $acceptableRequestTypes)) {
-            throw new Exception('Request type must be one of: ' . join(', ', $acceptableRequestTypes));            
+            throw new \Exception('Request type must be one of: ' . join(', ', $acceptableRequestTypes));            
         }
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
-            throw new Exception('Invalid url: ' . $url);
+            throw new \Exception('Invalid url: ' . $url);
         }
         if (in_array($type, [$acceptableRequestTypes[1], $acceptableRequestTypes[2]]) && !$parameters) {
-            throw new Exception('Parameter is expected for your ' . $type . ' request.');
+            throw new \Exception('Parameter is expected for your ' . $type . ' request.');
         }
 
         // prepare request
@@ -367,7 +412,7 @@ final class Request {
 
         $curlExecution = curl_exec($curlHandle);
         if ($curlExecution === false) {
-            throw new Exception('Request error: ' . curl_error($curlHandle));
+            throw new \Exception('Request error: ' . curl_error($curlHandle));
         } else {
             $result = json_decode($curlExecution, true);
             curl_close($curlHandle);

@@ -2,10 +2,10 @@
 
 namespace Framework\Core;
 
+use \Exception;
 use Framework\Core\App;
 use Framework\Infrastructure\{Session, ErrorLogger};
 use Framework\Utils\Str;
-use Framework\Libs\Inflection;
 
 /**
  * Encapsulates all the logic to get response data, view, etc from the app request.
@@ -181,6 +181,11 @@ final class Response {
             $this->_logger->log('Error setting Content-Type: application/json: ' . $e->getMessage());
         }
         echo json_encode(['hasError' => $hasError, 'message' => $message, 'data' => $data]);
+    }
+
+    public function jsonUnsupportedRequest(string $supportedRequestType) {
+        http_response_code(405);
+        $this->json(true, Str::toUpper($_SERVER['REQUEST_METHOD']) . " method not allowed. Only a {$supportedRequestType} is supported.");
     }
 
     /**
