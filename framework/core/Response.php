@@ -20,6 +20,7 @@ final class Response {
 
     protected $head;
     protected $body;
+    protected $section;
     protected $footer;
     protected $title = SITE_TITLE;
     protected $layout = LAYOUT_DEFAULT;
@@ -34,6 +35,11 @@ final class Response {
      * Indicates the html body section
      */
     private const BODY = 'body';
+
+    /**
+     * Indicates an extra section within the body tag
+     */
+    private const SECTION = 'section';
 
     /**
      * Indicates the html footer section, where scripts and perhaps css links can be included to the page, just before the body closing tag.
@@ -95,6 +101,8 @@ final class Response {
             return $this->body;
         } elseif (trim($type) == self::FOOTER) {
             return $this->footer;
+        } elseif (trim($type) == self::SECTION) {
+            return $this->section;
         }
 
         return null;
@@ -116,14 +124,16 @@ final class Response {
      * Ends and cleans the section already set with the section method.
      */
     public function end() {
-        if (in_array($this->outputBuffer, [self::HEAD, self::BODY, self::FOOTER])) {
+        if (in_array($this->outputBuffer, [self::HEAD, self::BODY, self::FOOTER, self::SECTION])) {
 
             if ($this->outputBuffer == self::HEAD) {
                 $this->head = ob_get_clean();
             } elseif ($this->outputBuffer == self::BODY) {
                 $this->body = ob_get_clean();
             } elseif ($this->outputBuffer == self::FOOTER) {
-                $this->footer = ob_get_clean();
+                $this->footer = ob_get_clean();            
+            } elseif ($this->outputBuffer == self::SECTION) {
+                $this->section = ob_get_clean();
             }
 
         } else {

@@ -67,6 +67,22 @@ final class Date {
         return $todayFormatted;
     }
 
+    /**
+     * Returns the first day of a given date.
+     * 
+     * @param string $date The date to extract the working days from its month.
+     * @param string $format Specifies the expected output format. This is set to date+time by default. You can use one of the class constants FORMAT_ to specify the expected date format.
+     * 
+     */
+    public static function getFirstDayOf(string $date = 'now', string $format = self::FORMAT_YMD) : string {
+        $dateObj = new DateTime($date);
+        $dateObj->modify('first day of');
+        $result = $dateObj->format($format);
+        unset($dateObj);
+        
+        return $result;
+    }
+
     public static function format(string $value, $format = self::FORMAT_YMD_WITH_TIME): string {
         if (Str::isEmpty($value)) return '';
 

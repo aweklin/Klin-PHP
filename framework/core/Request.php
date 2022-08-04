@@ -299,6 +299,9 @@ final class Request {
 
             // get the action
             $action     = (isset($url[0]) && $url[0] ? ucwords($url[0]) : DEFAULT_ACTION);
+            if (Str::contains($action, '')) {
+                $action = join('', explode('-', $action));
+            }
             array_shift($url);
 
             // parameter
