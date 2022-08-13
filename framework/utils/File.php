@@ -30,22 +30,26 @@ final class File {
     public static function upload($fileId, $destination, $overwriteIfExists = true, $allowedExtensions = UPLOAD_ALLOWED_EXTENSIONS, $allowedMaximumUploadSize = -1) {
 
         // some validations
+
+        $fileName       = $_FILES[$fileId]['name'];
+        $fileExtension  =  strtolower(self::getExtension($fileName));
+        $allowedExtensions = array_map('strtolower', $allowedExtensions);
+        if ($allowedExtensions !== ['*.*'])
+            if (!in_array($fileExtension, $allowedExtensions))
+                throw new Exception("File with .{$fileExtension} extension is not allowed for upload. Please upload a file with any of the following extensions: " . implode(', ', $allowedExtensions));
+
         if (!isset($_FILES) || (isset($_FILES) && !$_FILES))
             throw new Exception("No file was uploaded.");
         if (!$_FILES[$fileId])
             throw new Exception("There was no file element found with the id: {$fileId}.");
-        if (!is_dir($destination))
-            throw new Exception("Destination: {$destination} is not a valid directory.");
+        /*if (!is_dir($destination))
+            throw new Exception("Destination: {$destination} is not a valid directory.");*/
+        if (!file_exists($destination))
+            mkdir($destination, 0775, true);
         if (!is_writable($destination))
             throw new Exception("Access denied to write to the destination: {$destination}.");
         if (!$_FILES[$fileId]['name'])
             return;
-
-        $fileName       = $_FILES[$fileId]['name'];
-        $fileExtension  =  self::getExtension($fileName);
-        if ($allowedExtensions !== ['*.*'])
-            if (!in_array($fileExtension, $allowedExtensions))
-                throw new Exception("File with .{$extension} extension is not allowed for upload. Please upload a file with any of the following extensions: " . implode(', ', $allowedExtensions));
 
         $fileSize = $_FILES[$fileId]['size'];
         if ($allowedMaximumUploadSize !== -1)
@@ -102,7 +106,7 @@ final class File {
         $fileExtension  = self::getExtension($fileName);
         if ($allowedExtensions !== ['*.*'])
             if (!in_array($fileExtension, $allowedExtensions))
-                throw new Exception("File with .{$extension} extension is not allowed for upload. Please upload a file with any of the following extensions: " . implode(', ', $allowedExtensions));
+                throw new Exception("File with .{$fileExtension} extension is not allowed for upload. Please upload a file with any of the following extensions: " . implode(', ', $allowedExtensions));
 
         // extract the data and then the base64 string
         $fileData   = file_get_contents($_FILES[$fileId]['tmp_name']);
