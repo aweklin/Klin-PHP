@@ -194,4 +194,18 @@ final class Str {
         return base64_decode($encoded, $strict);
     }
 	
+    static function retainOnlyAlphaNumeric(string $value) {
+        if (self::isEmpty($value)) return '';
+
+        $result = preg_replace('/[\@\.\;\" "]+/', '', $value);
+        return $result;
+    }
+	
+    static function retainOnlyAlphabets($value) {
+        if (self::isEmpty($value)) return '';
+        
+        $result = preg_replace('/[0-9\@\.\;\" "]+/', '', $value);
+        return $result;
+    }
+	
 }
