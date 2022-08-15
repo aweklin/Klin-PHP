@@ -45,7 +45,7 @@ final class Str {
      * 
      * @param mixed $value The value being checked.
      */
-    public static function isEmpty(string $value = '') : bool {
+    public static function isEmpty(mixed $value = '') : bool {
         if (!$value) return true;
         if (mb_strlen(trim($value)) == 0) return true;
         return false;
