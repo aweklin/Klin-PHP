@@ -296,6 +296,12 @@ final class Request {
             // get the controller
             $controller = (isset($url[0]) && $url[0] ? ucwords($url[0]) : DEFAULT_CONTROLLER) . CONTROLLER_SUFFIX;
             array_shift($url);
+            if (Str::contains($controller, '-')) {
+                $controllerArray = explode('-', $controller);
+                $controller = join('', array_map(function($item) {
+                    return ucfirst($item);
+                }, $controllerArray));
+            }
 
             // get the action
             $action     = (isset($url[0]) && $url[0] ? ucwords($url[0]) : DEFAULT_ACTION);
