@@ -330,7 +330,9 @@ class Model implements IDatabase {
     }
 
     public function fetch() : array {
-        return $this->database->fetch($this->_table, $this->_composeQueryParts());
+        $result = $this->database->fetch($this->_table, $this->_composeQueryParts());
+        $this->_clear();
+        return $result;
     }
 
     public function executeStoredProcedure(string $procedureName, array $parameters = [], bool $isSelectingRecords = true, string $objectOutputName = 'procedure_results') {

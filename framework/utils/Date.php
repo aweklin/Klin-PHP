@@ -253,7 +253,7 @@ final class Date {
         return self::_addDate($date, 'Y', $years, $format);
     }
 
-    private function _addDate($value = self::NOW, $datePart = 'D', $interval = 1, $format = self::FORMAT_YMD_WITH_TIME) {
+    private static function _addDate($value = self::NOW, $datePart = 'D', $interval = 1, $format = self::FORMAT_YMD_WITH_TIME) {
         if (Str::isEmpty($value)) return '';
 
         if (!self::_isValid($value)) throw new Exception("{$value} is not recognized as a valid date.");

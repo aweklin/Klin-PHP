@@ -516,7 +516,7 @@ class Database implements IDatabase {
             }
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log($e->getMessage());
+            $this->_logger->log($e->getMessage() . PHP_EOL . $sql . PHP_EOL . print_r($parameters, true));
         }
 
         return $this->_data;
@@ -533,8 +533,8 @@ class Database implements IDatabase {
                 $grandChildForeignField = $grandChildRelationship[self::RELATIONSHIP_FOREIGN_FIELD];
 
                 $grandChildRecord = $this->_getInnerRelationshipData($referenceRecord[$grandChildPrimaryField], $grandChildForeignTable, $grandChildForeignField);
+                $foreignTableSingle = $inflection->singularize($grandChildForeignTable);
                 if ($grandChildRecord) {
-                    $foreignTableSingle = $inflection->singularize($grandChildForeignTable);
                     $referenceRecord[$foreignTableSingle] = $grandChildRecord[0][$foreignTableSingle];
                 } else {
                     $referenceRecord[$foreignTableSingle] = null;
