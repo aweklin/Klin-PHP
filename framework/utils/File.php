@@ -27,7 +27,7 @@ final class File {
      * @return void
      * 
      */
-    public static function upload($fileId, $destination, $overwriteIfExists = true, $allowedExtensions = UPLOAD_ALLOWED_EXTENSIONS, $allowedMaximumUploadSize = -1) {
+    public static function upload($fileId, $destination, $overwriteIfExists = true, $allowedExtensions = UPLOAD_ALLOWED_EXTENSIONS, $allowedMaximumUploadSize = -1) : string {
 
         // some validations
 
@@ -49,14 +49,15 @@ final class File {
         if (!is_writable($destination))
             throw new Exception("Access denied to write to the destination: {$destination}.");
         if (!$_FILES[$fileId]['name'])
-            return;
+            return '';
 
         $fileSize = $_FILES[$fileId]['size'];
         if ($allowedMaximumUploadSize !== -1)
             if ($allowedMaximumUploadSize < $fileSize)
                 throw new Exception("You can only upload a file within " . ($allowedMaximumUploadSize < 2048 ? $allowedMaximumUploadSize . "KB." : ($allowedMaximumUploadSize / 1024) . "MB."));
 
-        $path = $destination . DS . $fileName;
+        $newFileName = uniqid() . '.' . $fileExtension;
+        $path = $destination . DS . $newFileName; //$fileName;
         if (file_exists($path) && !$overwriteIfExists)
             throw new Exception("There is already a file named {$fileName} at {$destination}.");
         
@@ -64,6 +65,7 @@ final class File {
         if (!@move_uploaded_file($_FILES[$fileId]['tmp_name'], $path))
             throw new Exception("Unable to upload {$fileName} to {$destination}");//TODO:: append actual file upload error
 
+        return $newFileName;
     }
 
     /**
