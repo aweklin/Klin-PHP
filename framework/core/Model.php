@@ -66,6 +66,10 @@ class Model implements IDatabase {
         $this->_table       = $this->toTableName($this->_modelName);
     }
 
+    protected function setTableName(string $tableName) {
+        $this->_table = $tableName;
+    }
+
     protected function toTableName($modelName) : string {
         if (DATABASE_TABLE_NAMES_PLURALIZED) {
             global $inflection;
