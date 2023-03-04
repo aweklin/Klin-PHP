@@ -43,7 +43,7 @@ class Model implements IDatabase {
     public $pdo;
     public $rowCount;
 
-    public function __construct() {
+    public function __construct(string $tableName = '') {
         $this->_logger = new ErrorLogger();
 
         $this->database = Database::getInstance();
@@ -53,17 +53,17 @@ class Model implements IDatabase {
 
         $this->_clear();
 
-        $this->setModel(get_class($this));
+        $this->setModel(get_class($this), $tableName);
         $this->_setTableColumns();
     }
 
-    protected function setModel(string $modelName) {
+    protected function setModel(string $modelName, string $tableName = '') {
         global $inflection;
 
         $modelNameArray     = explode(DS, $modelName);
         $modelName          = array_pop($modelNameArray);
         $this->_modelName   = $modelName;
-        $this->_table       = $this->toTableName($this->_modelName);
+        $this->_table       = ($tableName ? $tableName : $this->toTableName($this->_modelName));
     }
 
     protected function setTableName(string $tableName) {
