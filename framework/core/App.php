@@ -2,7 +2,9 @@
 
 namespace Framework\Core;
 
+use Exception;
 use Framework\Core\Request;
+use Framework\Interfaces\IRouter;
 
 /**
  * Contains some low lever methods that the app uses and some security mechanism.
@@ -13,10 +15,10 @@ class App {
     /**
      * Initializes a new instance of the App with the request url parameter.
      */
-    public function __construct(array $requestUrl) {
+    public function __construct(IRouter $router, array $requestUrl) {
         $this->_setErrorReporting();
         $this->_unregisterGlobals();
-        Request::route($requestUrl);
+        $router->route($requestUrl);
     }
 
     /**

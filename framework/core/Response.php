@@ -1,10 +1,15 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Framework\Core;
 
 use \Exception;
 use Framework\Core\App;
 use Framework\Infrastructure\{Session, ErrorLogger};
+use Framework\Interfaces\IJson;
+use Framework\Interfaces\ILogger;
+use Framework\Interfaces\IResponse;
 use Framework\Utils\Str;
 
 /**
@@ -12,11 +17,11 @@ use Framework\Utils\Str;
  * 
  * @author Akeem Aweda | akeem@aweklin.com | +2347085287169
  */
-final class Response {
+final class Response implements IResponse {
 
-    private $_controllerName = '';
-    private $_viewName = '';
-    private $_logger;
+    private string $_controllerName = '';
+    private string $_viewName = '';
+    private ILogger $_logger;
 
     protected $head;
     protected $body;
@@ -46,7 +51,7 @@ final class Response {
      */
     private const FOOTER = 'footer';
 
-    public function __construct(string $controllerName, string $viewName) {
+    public function __construct(string $controllerName, string $viewName, public IJson $json) {
         global $inflection;
 
         $this->_controllerName = $controllerName;
@@ -72,7 +77,7 @@ final class Response {
      * 
      * @return void
      */
-    public function setTitle(string $title) {
+    public function setTitle(string $title) : void {
         $this->title = $title;
     }
 
@@ -83,7 +88,7 @@ final class Response {
      * 
      * @return void
      */
-    public function setLayout(string $path) {
+    public function setLayout(string $path) : void {
         $this->layout = $path;
     }
 
@@ -92,18 +97,17 @@ final class Response {
      * 
      * @param string $type Specifies the section of the layout to be included.
      * 
-     * @return void
+     * @return mixed
      */
-    public function getContent(string $type) {
-        if (trim($type) == self::HEAD) {
+    public function getContent(string $type) : mixed {
+        if (trim($type) == self::HEAD)
             return $this->head;
-        } elseif (trim($type) == self::BODY) {
+        if (trim($type) == self::BODY)
             return $this->body;
-        } elseif (trim($type) == self::FOOTER) {
+        if (trim($type) == self::FOOTER)
             return $this->footer;
-        } elseif (trim($type) == self::SECTION) {
+        if (trim($type) == self::SECTION)
             return $this->section;
-        }
 
         return null;
     }

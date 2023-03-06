@@ -16,12 +16,14 @@ define('PATH_FRAMEWORK_CORE_VALIDATORS_RULES', PATH_FRAMEWORK_CORE_VALIDATORS . 
 define('PATH_FRAMEWORK_UTILS', PATH_FRAMEWORK . DS . 'utils');
 define('PATH_FRAMEWORK_LIBS', PATH_FRAMEWORK . DS . 'libs');
 define('PATH_FRAMEWORK_INTERFACES', PATH_FRAMEWORK . DS . 'interfaces');
+define('PATH_FRAMEWORK_EXCEPTIONS', PATH_FRAMEWORK . DS . 'exceptions');
 define('PATH_FRAMEWORK_DECORATOR', PATH_FRAMEWORK . DS . 'decorator');
 define('PATH_FRAMEWORK_INFRASTRUCTURE', PATH_FRAMEWORK . DS . 'infrastructure');
 
 // app paths
 define('PATH_APP', ROOT . DS . 'app');
 define('PATH_APP_TMP', PATH_APP . DS . 'tmp');
+define('PATH_APP_CONFIG', PATH_APP . DS . 'config');
 define('PATH_APP_TMP_LOGS', PATH_APP_TMP . DS . 'logs');
 define('PATH_APP_TMP_CACHE', PATH_APP_TMP . DS . 'cache');
 define('PATH_APP_SRC', PATH_APP . DS . 'src');

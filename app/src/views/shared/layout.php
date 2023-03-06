@@ -11,8 +11,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <link rel="stylesheet" href="<?= APP_BASE_URL; ?>app/public/css/bootstrap.min.css">
-    <link rel="stylesheet" href="<?= APP_BASE_URL; ?>app/public/css/custom.css">
+    <link rel="stylesheet" href="<?= URL_PUBLIC_CSS ?>bootstrap.min.css">
+    <link rel="stylesheet" href="<?= URL_PUBLIC_CSS . 'custom.css?v=' . time() ?>">
 
     <title><?= $this->getTitle(); ?></title>
 
@@ -73,9 +73,10 @@
       </footer>
     </div>
 
-    <script src="<?= APP_BASE_URL; ?>app/public/js/jquery-2.2.4.min.js"></script>
-    <script src="<?= APP_BASE_URL; ?>app/public/js/bootstrap.min.js"></script>
-    <script src="<?= APP_BASE_URL; ?>app/public/js/custom.js"></script>    
+    <script src="<?= URL_PUBLIC_JS; ?>jquery-2.2.4.min.js"></script>
+    <script src="<?= URL_PUBLIC_JS; ?>bootstrap.min.js"></script>
+    <script src="<?= URL_PUBLIC_JS . 'custom.js?v=' . time() ?>"></script>
+    <script src="<?= URL_PUBLIC ?>vendors/sweetalert2/sweetalert2.all.min.js"></script>
     <script>
       window.removeContainerClassFromPage = function() {
         $('#pageContent').removeClass('container');

@@ -4,6 +4,7 @@ namespace Framework\Core;
 
 use Framework\Core\Validators\ValidationRule;
 use Framework\Core\Validators\Validator;
+use Framework\Interfaces\IRequest;
 use Framework\Utils\{Str, Ary};
 
 /**
@@ -11,7 +12,7 @@ use Framework\Utils\{Str, Ary};
  * 
  * @author Akeem Aweda | akeem@aweklin.com | +2347085287169
  */
-final class Request {
+final class Request implements IRequest {
 
     private $_requestObject = null;
     private $_data = [];
@@ -43,6 +44,9 @@ final class Request {
     }
 
     public function getValidationErrors() : string {
+        if ($this->hasMissingItems())
+            return $this->getMissingItems();
+            
         return $this->_validationErrors;
     }
 
@@ -57,17 +61,8 @@ final class Request {
      * 
      * @return bool
      */
-    public function isPost(array $expectedItems = []) : bool {
-        $fieldsExpected = (!$expectedItems ? [] : (Ary::isAssociative($expectedItems) ? array_keys($expectedItems) : $expectedItems));
-        if ($fieldsExpected) {
-            $this->_checkForMissingItemsInRequest($this->_requestObject, $fieldsExpected);
-            if (Ary::isAssociative($expectedItems)) {
-                foreach ($expectedItems as $key => $value) {
-                    array_push($this->_validations, ['field' => $key, 'rules' => $value]);
-                }
-                $this->_validateRequest();
-            }
-        }
+    public function isPost(array $expectedItems = []) : bool {        
+        $this->_validatePayload($expectedItems);
         return $this->_getRequestMethod() === 'post';
     }
 
@@ -80,7 +75,6 @@ final class Request {
         return $this->_getRequestMethod() === 'get';
     }
 
-
     /**
      * Checks if the request method is put.
      * 
@@ -88,20 +82,10 @@ final class Request {
      * 
      * @return bool
      */
-    public function isPut(array $expectedItems = []) : bool {
-        $fieldsExpected = (!$expectedItems ? [] : (Ary::isAssociative($expectedItems) ? array_keys($expectedItems) : $expectedItems));
-        if ($fieldsExpected) {
-            $this->_checkForMissingItemsInRequest($this->_requestObject, $fieldsExpected);
-            if (Ary::isAssociative($expectedItems)) {
-                foreach ($expectedItems as $key => $value) {
-                    array_push($this->_validations, ['field' => $key, 'rules' => $value]);
-                }
-                $this->_validateRequest();
-            }
-        }
+    public function isPut(array $expectedItems = []) : bool {        
+        $this->_validatePayload($expectedItems);
         return $this->_getRequestMethod() === 'put';
     }
-
 
     /**
      * Checks if the request method is delete.
@@ -135,6 +119,14 @@ final class Request {
      */
     public function hasMissingItems() : bool {
         return count($this->_missingItems) > 0;
+    }
+
+    /**
+     * Returns a value, indicating wether the post/put request has some missing key(s).
+     */
+    public function isValid(array $expectedItems) : bool {
+        $this->_validatePayload($expectedItems);
+        return count($this->_missingItems) == 0;
     }
 
     /**
@@ -208,13 +200,14 @@ final class Request {
                 $postData = \json_decode($item, true);
             }
         }
-        if (!$postData) {   // this may be coming from api client like PostMan
+        if (!$postData) {   
+            // this may be coming from api client like PostMan
             $postData = file_get_contents("php://input");
             if ($postData) {
                 $postData = json_decode($postData);
             }
         }
-
+        
         // set the request object
         $this->_requestObject = $postData;
 
@@ -245,12 +238,19 @@ final class Request {
     private function _checkForMissingItemsInRequest($request, array $expectedItems) {
         $this->_missingItems = [];
 
-        if ($request && $expectedItems) {        
+        if ($request && $expectedItems) {
             foreach($expectedItems as $item) {
                 if (\is_array($item) && !isset($request[$item])) {
                     array_push($this->_missingItems, $item);
-                } else if (\is_object($item) && !isset($request->$item)) {
+                    continue;
+                }
+                if (\is_object($item) && !isset($request->$item)) {
                     array_push($this->_missingItems, $item);
+                    continue;
+                }
+                if (!isset($request->$item)) {
+                    array_push($this->_missingItems, $item);
+                    continue;
                 }
             }
         }
@@ -274,75 +274,17 @@ final class Request {
         }
     }
 
-    /**
-     * Takes the user to the requested page. If the controller/action was not found, ErrorController::notFound method is processeds.
-     * 
-     * @param array $url The request url.
-     */
-    public static function route(array $url) {
-        $controller     = '';
-        $controllerName = '';
-        $action         = '';
-        $parameters     = [];
-
-        // get the controller, action and parameter from url
-        if (!$url) {
-            
-            $controller = DEFAULT_CONTROLLER . CONTROLLER_SUFFIX;
-            $action     = DEFAULT_ACTION;
-
-        } else {
-
-            // get the controller
-            $controller = (isset($url[0]) && $url[0] ? ucwords($url[0]) : DEFAULT_CONTROLLER) . CONTROLLER_SUFFIX;
-            array_shift($url);
-            if (Str::contains($controller, '-')) {
-                $controllerArray = explode('-', $controller);
-                $controller = join('', array_map(function($item) {
-                    return ucfirst($item);
-                }, $controllerArray));
+    private function _validatePayload(array $expectedItems) {
+        $fieldsExpected = (!$expectedItems ? [] : (Ary::isAssociative($expectedItems) ? array_keys($expectedItems) : $expectedItems));
+        if ($fieldsExpected) {
+            $this->_checkForMissingItemsInRequest($this->_requestObject, $fieldsExpected);
+            if (Ary::isAssociative($expectedItems)) {
+                foreach ($expectedItems as $key => $value) {
+                    array_push($this->_validations, ['field' => $key, 'rules' => $value]);
+                }
+                $this->_validateRequest();
             }
-
-            // get the action
-            $action     = (isset($url[0]) && $url[0] ? ucwords($url[0]) : DEFAULT_ACTION);
-            if (Str::contains($action, '')) {
-                $action = join('', explode('-', $action));
-            }
-            array_shift($url);
-
-            // parameter
-            $parameters = $url;
-
-        }
-
-        $controllerName = $controller;
-
-        $tempController = $controller;
-
-        $controllerPath = 'App\Src\Controllers\\';
-
-        if (!file_exists(PATH_APP_CONTROLLERS . DS . $controllerName . '.php')) {
-            $controller = $controllerPath . 'Error' . CONTROLLER_SUFFIX;
-            $action     = 'notFound';
-            $controllerName = $controller;
-        }
-
-        $controller = (!Str::contains($controller, $controllerPath) ? $controllerPath : '') . $controller;
-        $controllerClass= new $controller($controllerName, $action);
-        if (!file_exists(PATH_APP_CONTROLLERS . DS . $tempController . '.php')) {
-            $controllerClass->response->setTitle('Not Found!');
-        }
-
-        if (!method_exists($controller, $action)) {
-            $controller = $controllerPath .  'Error' . CONTROLLER_SUFFIX;
-            $action     = 'notFound';
-            $controllerName = $controller;
-
-            $controllerClass= new $controller($controllerName, $action);
-
-            $controllerClass->response->setTitle('Not Found!');
-        }
-        call_user_func_array([$controllerClass, $action], $parameters);
+        }        
     }
 
     /**
@@ -359,6 +301,16 @@ final class Request {
         return $currentPage;
     }
 
+    /**
+     * Makes a RESTFUL api call.
+     * 
+     * @param string $type One of POST, PUT, GET, DELETE
+     * @param string $url Specifies the endpoint
+     * @param array $parameters Specifies the request parameters
+     * @param array $headers Specifies the request header.
+     * 
+     * @return array
+     */
     public function webService(string $type, string $url, array $parameters = [], array $headers = []) : array {
         $type = Str::toLower($type);
 

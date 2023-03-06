@@ -2,10 +2,12 @@
 
 namespace App\Src\Models;
 
+use AllowDynamicProperties;
 use Framework\Core\Model;
 use Framework\Infrastructure\{Cookie, Session};
 use App\Src\Models\User;
 
+#[AllowDynamicProperties]
 class UserSession extends Model {
 
     public static function getFromCookie() {

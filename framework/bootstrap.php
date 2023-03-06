@@ -5,6 +5,10 @@ use Framework\Utils\Date;
 use Framework\Core\App;
 use Framework\Infrastructure\Cookie;
 use App\Src\Models\User;
+use Framework\Core\Router;
+use Framework\Infrastructure\DependencyContainer;
+use Framework\Infrastructure\ErrorLogger;
+use Framework\Interfaces\ILogger;
 
 /**
  * 
@@ -12,13 +16,40 @@ use App\Src\Models\User;
  * 
  */
 
-// ensure the configuration file is present
-if (!file_exists(PATH_APP . DS . 'config.php')) {
-    die('A configuration file is needed inside the \"' . PATH_APP . '\" directory. The file name must be \"config.php\".');
+// ensure the configuration files required are present
+if (!file_exists(PATH_APP . DS . 'constants.php')) {
+    die('A configuration file is needed inside the \"' . PATH_APP . '\" directory. The file name must be \"constants.php\".');
+}
+if (!file_exists(PATH_APP_CONFIG . DS . 'dependencies.php')) {
+    die('A configuration file is needed inside the \"' . PATH_APP_CONFIG . DS . '\" directory. The file name must be \"dependencies.php\".');
+}
+if (!file_exists(PATH_APP_CONFIG . DS . 'database.php')) {
+    die('A configuration file is needed inside the \"' . PATH_APP_CONFIG . DS . '\" directory. The file name must be \"database.php\".');
+}
+if (!file_exists(PATH_APP_CONFIG . DS . 'mail.php')) {
+    die('A configuration file is needed inside the \"' . PATH_APP_CONFIG . DS . '\" directory. The file name must be \"mail.php\".');
+}
+if (!file_exists(PATH_APP_CONFIG . DS . 'urls.php')) {
+    die('A configuration file is needed inside the \"' . PATH_APP_CONFIG . DS . '\" directory. The file name must be \"urls.php\".');
+}
+if (!file_exists(PATH_APP_CONFIG . DS . 'model.php')) {
+    die('A configuration file is needed inside the \"' . PATH_APP_CONFIG . DS . '\" directory. The file name must be \"model.php\".');
+}
+if (!file_exists(PATH_APP_CONFIG . DS . 'controller.php')) {
+    die('A configuration file is needed inside the \"' . PATH_APP_CONFIG . DS . '\" directory. The file name must be \"controller.php\".');
+}
+if (!file_exists(PATH_APP_CONFIG . DS . 'security.php')) {
+    die('A configuration file is needed inside the \"' . PATH_APP_CONFIG . DS . '\" directory. The file name must be \"security.php\".');
 }
 
 // include configuration and helper functions files
-require_once (PATH_APP . DS . 'config.php');
+require_once (PATH_APP . DS . 'constants.php');
+require_once (PATH_APP_CONFIG . DS . 'urls.php');
+require_once (PATH_APP_CONFIG . DS . 'database.php');
+require_once (PATH_APP_CONFIG . DS . 'model.php');
+require_once (PATH_APP_CONFIG . DS . 'controller.php');
+require_once (PATH_APP_CONFIG . DS . 'mail.php');
+require_once (PATH_APP_CONFIG . DS . 'security.php');
 
 // autoload classes with anonymous function
 spl_autoload_register(function($className) {
@@ -35,6 +66,11 @@ spl_autoload_register(function($className) {
 
 });
 
+$dependencyContainer = new DependencyContainer();
+
+$dependencyContainer->register(ILogger::class, ErrorLogger::class);
+require_once (PATH_APP_CONFIG . DS . 'dependencies.php');
+
 // These two lines are for inflection purpose only to inflect class names.
 $inflection = new Inflection();
 
@@ -47,5 +83,6 @@ if (Cookie::exists(SECURITY_COOKIE_REMEMBER_ME_NAME)) {
 
 if (isset($requestUrl)) {
     // initialize app and route request
-    new App($requestUrl);
+    $router = new Router($dependencyContainer);
+    new App($router, $requestUrl);
 }

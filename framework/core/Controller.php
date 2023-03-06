@@ -1,24 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework\Core;
 
+use AllowDynamicProperties;
 use Framework\Core\{Request, Response};
 use Framework\Infrastructure\Session;
 use Framework\Utils\Str;
 use App\Src\Models\User;
+use Framework\Infrastructure\ErrorLogger;
+use Framework\Interfaces\ILogger;
+use Framework\Interfaces\IRequest;
+use Framework\Interfaces\IResponse;
 
 /**
  * This is the base controller class which all controllers in the app extend.
  * 
  * @author Akeem Aweda | akeem@aweklin.com | +2347085287169
  */
+#[AllowDynamicProperties]
 class Controller {
 
-    protected $_controller;
-    protected $_action;
-    protected Request $request;
+    protected string $_controller;
+    protected string $_action;
+    protected IRequest $request;
+    protected ILogger $logger;
     
-    public Response $response;
+    public IResponse $response;
 
     /**
      * Creates a new instance of the Controller class with the name and action passed.
@@ -29,8 +38,12 @@ class Controller {
     public function __construct(string $controller, string $action) {
         $this->_controller  = $controller;
         $this->_action      = $action;
+        $this->logger       = new ErrorLogger();
         $this->request      = new Request();
-        $this->response     = new Response(Str::toLower(str_replace(CONTROLLER_SUFFIX, '', $controller)), $action);
+        $this->response     = new Response(
+            Str::toLower(str_replace(CONTROLLER_SUFFIX, '', $controller)), 
+            $action, 
+            new Json($this->logger));
 
         Session::set(APP_MESSAGE, null);
 
