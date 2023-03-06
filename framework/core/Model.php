@@ -6,10 +6,10 @@ use \Exception;
 use \stdClass;
 use Framework\Core\Database;
 use Framework\Interfaces\IDatabase;
-use Framework\Infrastructure\{Session, ErrorLogger};
+use Framework\Infrastructure\{ErrorLogger};
 use Framework\Utils\{Str, Ary, Date};
-use Framework\Decorator\Logger;
-use App\Src\Models\UserSession;
+use Framework\Interfaces\ILogger;
+use PDO;
 
 /**
  * Encapsulates the logic to manage each table in the database.
@@ -18,35 +18,33 @@ use App\Src\Models\UserSession;
  */
 class Model implements IDatabase {
 
-    const DEFAULT_FIELD_CREATED = 'created';
-    const DEFAULT_FIELD_MODIFIED = 'modified';
-    const DEFAULT_FIELD_DELETED = 'is_deleted';
-
     protected Database $database;
     
-    protected $_logger;
-    private $_table;
-    private $_modelName;
-    private $_isSoftDeleteEnabled = false;
-    private $_columnNames = [];
-    private $_parameters = [];
-    private $_bindable = [];
-    private $_order = [];
-    private $_limit = '';
-    private $_joins = [];
-    private $_relationships = [];
-    protected $_idField = 'id';
-    private $_isPrimaryFieldAutoIncrement = false;
+    protected ILogger $_logger;
+    private string $_table;
+    private string $_modelName;
+    private bool $_isSoftDeleteEnabled = false;
+    private array $_columnNames = [];
+    private array $_parameters = [];
+    private array $_bindable = [];
+    private array $_order = [];
+    private string $_limit = '';
+    private array $_joins = [];
+    private array $_relationships = [];
+    protected $_idField = DEFAULT_PRIMARY_FIELD;
 
-    protected $_errorMessage = '';
+    protected string $_errorMessage = '';
 
-    public $pdo;
-    public $rowCount;
+    public PDO|null $pdo;
+    public int $rowCount;
 
     public function __construct(string $tableName = '') {
         $this->_logger = new ErrorLogger();
 
         $this->database = Database::getInstance();
+        if ($this->database->hasError())
+            $this->_errorMessage = $this->database->getErrorMessage();
+            
         $this->database->setIdField($this->_idField);
 
         $this->pdo = $this->database->pdo;
@@ -111,10 +109,6 @@ class Model implements IDatabase {
                     
                     // check if primary key is auto_increment
                     $extra = Str::toLower($column->Extra);
-
-                    if ($extra && $extra === 'auto_increment') {
-                        $this->_isPrimaryFieldAutoIncrement = true;
-                    }
                 }
 
                 if ($column->Default) { 
@@ -163,7 +157,7 @@ class Model implements IDatabase {
                 }
 
                 // check if soft delete is enabled on the table
-                if ($columnName == self::DEFAULT_FIELD_DELETED) {
+                if ($columnName == DEFAULT_FIELD_DELETED) {
                     $this->_isSoftDeleteEnabled = true;
                 }
             }
@@ -177,13 +171,59 @@ class Model implements IDatabase {
 
     public function where(string $field, mixed $operatorOrValue, mixed $value = null) : Model {
         if ($value === null) {
+            if (in_array(Str::toLower($operatorOrValue), ['is not', 'is not null'])) {
+                array_push($this->_parameters, "{$field} {$operatorOrValue}");
+                return $this;    
+            }
+
             array_push($this->_parameters, "{$field} = ?");
             array_push($this->_bindable, $operatorOrValue);
-        } else {
-            array_push($this->_parameters, "{$field} {$operatorOrValue} ?");
-            array_push($this->_bindable, $value);
+
+            return $this;
         }
+
+        array_push($this->_parameters, "{$field} {$operatorOrValue} ?");
+        array_push($this->_bindable, $value);
+        
         return $this;
+    }
+
+    public function whereEquals(string $field, mixed $value) : Model {
+        return $this->where($field, '=', $value);
+    }
+
+    public function whereNotEquals(string $field, mixed $value) : Model {
+        return $this->where($field, '!=', $value);
+    }
+
+    public function whereGreaterThan(string $field, mixed $value) : Model {
+        return $this->where($field, '>', $value);
+    }
+
+    public function whereGreaterOrEquals(string $field, mixed $value) : Model {
+        return $this->where($field, '>=', $value);
+    }
+
+    public function whereLessThan(string $field, mixed $value) : Model {
+        return $this->where($field, '<', $value);
+    }
+
+    public function whereLessOrEquals(string $field, mixed $value) : Model {
+        return $this->where($field, '<=', $value);
+    }
+
+    public function whereBetween(string $field, mixed $lowerBound, mixed $upperBound) : Model {
+        return $this->whereGreaterOrEquals($field, $lowerBound)
+            ->_and()
+            ->whereLessOrEquals($field, $upperBound);
+    }
+
+    public function whereNull(string $field) : Model {
+        return $this->where($field, 'Is Null');
+    }
+
+    public function whereNotNull(string $field) : Model {
+        return $this->where($field, 'Is Not Null');
     }
 
     public function withOne(string $foreignTableName, string $foreignFieldName = '', string $primaryFieldName = 'id') : Model {
@@ -219,7 +259,13 @@ class Model implements IDatabase {
      * 
      * @return Model
      */
-    public function addRelationship(string $type, string $primaryTableName = '', string $primaryFieldName = '', string $foreignTableName = '', string $foreignFieldName = '', string $orderBy = '') : Model {
+    public function addRelationship(
+        string $type, 
+        string $primaryTableName = '', 
+        string $primaryFieldName = '', 
+        string $foreignTableName = '', 
+        string $foreignFieldName = '', 
+        string $orderBy = '') : Model {
         if (Str::isEmpty($primaryTableName)) $primaryTableName = $this->_table;
         if (Str::isEmpty($primaryFieldName)) $primaryFieldName = $this->_idField;
 
@@ -291,10 +337,10 @@ class Model implements IDatabase {
             $parameters['relationships'] = $this->_relationships;
         }
         if ($excludeDeleted && $this->_isSoftDeleteEnabled) {
-            $deletedClause =  "`" . self::DEFAULT_FIELD_DELETED . "` != 1";            
+            $deletedClause =  "`" . DEFAULT_FIELD_DELETED . "` != 1";            
             if (array_key_exists($conditionsParameter, $parameters)) {
                 if (is_array($parameters[$conditionsParameter])) {
-                    if (!in_array(self::DEFAULT_FIELD_DELETED, $parameters)) {
+                    if (!in_array(DEFAULT_FIELD_DELETED, $parameters)) {
                         array_push($parameters[$conditionsParameter], " AND " . $deletedClause);
                     } else {
                         array_push($parameters[$conditionsParameter],  $deletedClause);
@@ -415,20 +461,20 @@ class Model implements IDatabase {
         if ($isInserting) {
 
             // check for default fields and set their values
-            if (!array_key_exists(self::DEFAULT_FIELD_CREATED, $fields) && property_exists($this, self::DEFAULT_FIELD_CREATED)) {
-                $fields[self::DEFAULT_FIELD_CREATED] = Date::now();
+            if (!array_key_exists(DEFAULT_FIELD_CREATED, $fields) && property_exists($this, DEFAULT_FIELD_CREATED)) {
+                $fields[DEFAULT_FIELD_CREATED] = Date::now();
             }
-            if (!array_key_exists(self::DEFAULT_FIELD_MODIFIED, $fields) && property_exists($this, self::DEFAULT_FIELD_MODIFIED)) {
-                $fields[self::DEFAULT_FIELD_MODIFIED] = Date::now();
+            if (!array_key_exists(DEFAULT_FIELD_MODIFIED, $fields) && property_exists($this, DEFAULT_FIELD_MODIFIED)) {
+                $fields[DEFAULT_FIELD_MODIFIED] = Date::now();
             }
-            // if (!array_key_exists(self::DEFAULT_FIELD_DELETED, $fields) && property_exists($this, self::DEFAULT_FIELD_DELETED)) {
-            //     $fields[self::DEFAULT_FIELD_DELETED] = 0;
+            // if (!array_key_exists(DEFAULT_FIELD_DELETED, $fields) && property_exists($this, DEFAULT_FIELD_DELETED)) {
+            //     $fields[DEFAULT_FIELD_DELETED] = 0;
             // }
         } else {
             
             // check for default fields and set their values
-            if (!array_key_exists(self::DEFAULT_FIELD_MODIFIED, $fields) && property_exists($this, self::DEFAULT_FIELD_MODIFIED)) {
-                $fields[self::DEFAULT_FIELD_MODIFIED] = Date::now();
+            if (!array_key_exists(DEFAULT_FIELD_MODIFIED, $fields) && property_exists($this, DEFAULT_FIELD_MODIFIED)) {
+                $fields[DEFAULT_FIELD_MODIFIED] = Date::now();
             }
         }
 
@@ -457,7 +503,7 @@ class Model implements IDatabase {
         } else {
             if ($idValue) {
                 if ($this->_isSoftDeleteEnabled && !$forceDelete) {
-                    $this->save([$this->_idField => $idValue, self::DEFAULT_FIELD_DELETED => 1]);
+                    $this->save([$this->_idField => $idValue, DEFAULT_FIELD_DELETED => 1]);
                 } else {
                     $this->database->delete($this->_table, $idValue);
                     $this->_errorMessage = $this->database->getErrorMessage();
@@ -567,14 +613,14 @@ class Model implements IDatabase {
     public function set(array $input) : Model {
         if (!Ary::isAssociative($input)) 
             throw new Exception("Invalid input for model: {$this->_modelName}");
-        else {
-            foreach($input as $key => $value) {
-                if (in_array($key, $this->_columnNames)) {  //TODO:: may remove this later
-                    $this->{$key} = $value;
-                }
+        
+        foreach($input as $key => $value) {
+            if (in_array($key, $this->_columnNames)) {  //TODO:: may remove this later
+                $this->{$key} = $value;
             }
-            return $this;
-        }        
+        }
+        
+        return $this; 
     }
 
     protected function _clear() {

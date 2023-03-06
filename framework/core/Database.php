@@ -6,7 +6,6 @@ use \PDO;
 use \PDOException;
 use Framework\Interfaces\IDatabase;
 use Framework\Utils\{Str, Ary};
-use Framework\Decorator\Logger;
 use Framework\Infrastructure\ErrorLogger;
 
 /**
@@ -15,7 +14,7 @@ use Framework\Infrastructure\ErrorLogger;
  * @author Akeem Aweda | akeem@aweklin.com | +2347085287169
  */
 
-class Database implements IDatabase {
+final class Database implements IDatabase {
 
     private static $instance;
 
@@ -72,7 +71,7 @@ class Database implements IDatabase {
                                 ]);
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log($e->getMessage());
+            $this->_logger->log(convertExceptionToStringForLogging($e));
         }
     }
 
@@ -348,7 +347,7 @@ class Database implements IDatabase {
             
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log($e->getMessage());
+            $this->_logger->log(convertExceptionToStringForLogging($e));
             return null;
         }
     }
@@ -745,7 +744,7 @@ class Database implements IDatabase {
             $this->query($sql, [], $paramsAndValues);
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log('Insert error: ' . $e->getMessage());
+            $this->_logger->log(convertExceptionToStringForLogging($e));
         }
     }
 
@@ -783,7 +782,7 @@ class Database implements IDatabase {
             $this->query($sql, [], $paramsAndValues);
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log('Insert error: ' . $e->getMessage());
+            $this->_logger->log(convertExceptionToStringForLogging($e));
         }
     }
 
@@ -808,7 +807,7 @@ class Database implements IDatabase {
             $this->query($sql, [], $paramsAndValues);
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log($e->getMessage());
+            $this->_logger->log(convertExceptionToStringForLogging($e));
         }
     }
 

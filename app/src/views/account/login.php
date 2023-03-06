@@ -48,23 +48,27 @@
 <script>
     $(function() {
 
-        $('#loginForm').submit(function(e) {
+        $('#loginForm').submit(async function(e) {
             e.preventDefault();
 
             const $messageDiv = $('#loginMessage');
             $messageDiv.showMsg('i', 'Authenticating your credentials...');
             try {
-                $.post($(this).attr('action'), $(this).serialize())
-                .then(function(result) {//console.log(result);return;
-                    if (result.hasError) {
-                        $messageDiv.showMsg('e', result.message);
-                    } else {
-                        $messageDiv.showMsg('s', result.message);
-                        window.location.href = '<?= APP_BASE_URL ?>home/index';
+                const result = await noneGetAsync(
+                    'POST',
+                    $(this).attr('action'),
+                    {
+                        username: $('#username').val(),
+                        password: $('#password').val(),
+                        form_token: $('#form_token').val(),
                     }
-                }, function(error) {
-                    $messageDiv.showMsg('e', error.responseText);
-                });
+                );
+                if (result.hasError) {
+                    $messageDiv.showMsg('e', result.message);
+                } else {
+                    $messageDiv.showMsg('s', result.message);
+                    window.location.href = '<?= APP_BASE_URL ?>home/index';
+                }
             } catch (error) {
                 $messageDiv.showMsg('e', error);
             }

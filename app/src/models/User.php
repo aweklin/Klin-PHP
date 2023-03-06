@@ -2,14 +2,18 @@
 
 namespace App\Src\Models;
 
+use AllowDynamicProperties;
 use Framework\Core\{Database, Model};
 use Framework\Infrastructure\{BcryptPasswordHasher, Cookie, Session, Security};
 use Framework\Core\Validators\{Validator, ValidationRule};
 use Framework\Core\Validators\Rules\{RequiredRule, MinimumLengthRule, MaximumLengthRule, UniqueRule, EmailRule, EqualRule};
 use App\Src\Models\UserSession;
+use Exception;
 use Framework\Decorator\PasswordEncryptor;
 use Framework\Interfaces\IPasswordVerifier;
+use PDOException;
 
+#[AllowDynamicProperties]
 class User extends Model {
 
     var $hiddenFields = ['password'];
@@ -19,7 +23,7 @@ class User extends Model {
 
     private PasswordEncryptor $_passwordEncryptor;
 
-    public function __construct($idOrUsername = '') {
+    public function __construct(string $idOrUsername = '') {
         parent::__construct();
 
         self::$_isLoggedIn = false;
@@ -134,13 +138,13 @@ class User extends Model {
     }
 
     public static function loginFromCookie() {
-        if (Cookie::exists(SECURITY_COOKIE_REMEMBER_ME_NAME)) {
+        /*if (Cookie::exists(SECURITY_COOKIE_REMEMBER_ME_NAME)) {
             $userSession = UserSession::getFromCookie();
             if ($userSession && $userSession->rowCount) {
                 $user = new self($userSession->user_id);
                 $user->login();
             }
-        }
+        }*/
     }
 
     public static function isLoggedIn() {
