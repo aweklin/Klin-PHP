@@ -1,6 +1,7 @@
 <?php
 
 /**
+ * ------------ PLEASE, DO NOT TOUCH ------------
  * 
  * This file contains global constants that it used throughout the app
  * 
@@ -27,6 +28,8 @@ define('PATH_APP_CONFIG', PATH_APP . DS . 'config');
 define('PATH_APP_TMP_LOGS', PATH_APP_TMP . DS . 'logs');
 define('PATH_APP_TMP_CACHE', PATH_APP_TMP . DS . 'cache');
 define('PATH_APP_SRC', PATH_APP . DS . 'src');
+define('PATH_APP_PUBLIC', PATH_APP . DS . 'public');
+define('PATH_APP_PUBLIC_IMG', PATH_APP_PUBLIC . DS . 'img');
 define('PATH_APP_CONTROLLERS', PATH_APP_SRC . DS . 'controllers');
 define('PATH_APP_MODELS', PATH_APP_SRC . DS . 'models');
 define('PATH_APP_VIEWS', PATH_APP_SRC . DS . 'views');

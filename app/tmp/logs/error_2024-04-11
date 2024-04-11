@@ -1,0 +1,27 @@
+
+2024-04-11 15:26:57
+Error message: SQLSTATE[HY000] [1045] Access denied for user ''@'localhost' (using password: NO)
+Line number: 65
+File: /Applications/MAMP/htdocs/klinphp/framework/core/Database.php
+Stack trace: #0 /Applications/MAMP/htdocs/klinphp/framework/core/Database.php(65): PDO->__construct('mysql:host=127....', '', Object(SensitiveParameterValue), Array)
+#1 /Applications/MAMP/htdocs/klinphp/framework/core/Database.php(80): Framework\Core\Database->__construct()
+#2 /Applications/MAMP/htdocs/klinphp/framework/core/Model.php(44): Framework\Core\Database::getInstance()
+#3 /Applications/MAMP/htdocs/klinphp/app/src/models/User.php(27): Framework\Core\Model->__construct()
+#4 [internal function]: App\Src\Models\User->__construct('idOrUsername')
+#5 /Applications/MAMP/htdocs/klinphp/framework/infrastructure/DependencyContainer.php(81): ReflectionClass->newInstanceArgs(Array)
+#6 /Applications/MAMP/htdocs/klinphp/framework/infrastructure/DependencyContainer.php(29): Framework\Infrastructure\DependencyContainer->_resolve('App\\Src\\Models\\...')
+#7 /Applications/MAMP/htdocs/klinphp/framework/infrastructure/DependencyContainer.php(74): Framework\Infrastructure\DependencyContainer->get('App\\Src\\Models\\...')
+#8 [internal function]: Framework\Infrastructure\DependencyContainer->Framework\Infrastructure\{closure}(Object(ReflectionParameter))
+#9 /Applications/MAMP/htdocs/klinphp/framework/infrastructure/DependencyContainer.php(60): array_map(Object(Closure), Array)
+#10 /Applications/MAMP/htdocs/klinphp/framework/infrastructure/DependencyContainer.php(29): Framework\Infrastructure\DependencyContainer->_resolve('App\\Src\\Control...')
+#11 /Applications/MAMP/htdocs/klinphp/framework/infrastructure/DependencyContainer.php(74): Framework\Infrastructure\DependencyContainer->get('App\\Src\\Control...')
+#12 [internal function]: Framework\Infrastructure\DependencyContainer->Framework\Infrastructure\{closure}(Object(ReflectionParameter))
+#13 /Applications/MAMP/htdocs/klinphp/framework/infrastructure/DependencyContainer.php(60): array_map(Object(Closure), Array)
+#14 /Applications/MAMP/htdocs/klinphp/framework/infrastructure/DependencyContainer.php(29): Framework\Infrastructure\DependencyContainer->_resolve('App\\Src\\Control...')
+#15 /Applications/MAMP/htdocs/klinphp/framework/core/Router.php(94): Framework\Infrastructure\DependencyContainer->get('App\\Src\\Control...')
+#16 /Applications/MAMP/htdocs/klinphp/framework/core/App.php(21): Framework\Core\Router->route(Array)
+#17 /Applications/MAMP/htdocs/klinphp/framework/bootstrap.php(91): Framework\Core\App->__construct(Object(Framework\Core\Router), Array)
+#18 /Applications/MAMP/htdocs/klinphp/index.php(23): require_once('/Applications/M...')
+#19 {main}
+
+=========================================================

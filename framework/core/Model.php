@@ -367,7 +367,7 @@ class Model implements IDatabase {
         if (!$this->hasError() && $queryResult) {
             $results = [];
             foreach($queryResult as $result) {
-                $model = (IS_DEVELOPMENT ? 'App\Src\Models\\' : '') . $this->_modelName;
+                $model = get_called_class();
                 $object = new $model();
                 $object->_set($result);
                 array_push($results, $this->getData($object));
@@ -406,7 +406,7 @@ class Model implements IDatabase {
 
         $this->_clear();
 
-        $model = (IS_DEVELOPMENT ? 'App\Src\Models\\' : '') . $this->_modelName;
+        $model = get_called_class();
 
         $object = new $model();
         if ($result) {

@@ -59,7 +59,7 @@ class Controller {
      */
     private function _validateAuthentication() {
         if (!User::isLoggedIn()) {
-            Response::redirect('account/login');
+            Response::redirect(DEFAULT_CONTROLLER . '/' . DEFAULT_ACTION);
         }
     }
 

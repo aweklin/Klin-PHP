@@ -5,13 +5,13 @@ use Framework\Utils\Collection;
 
 <?php $this->section('body');
 
-$collection = new Collection([1, 2, 3]);
-echo json_encode($collection->toList()) . '<br>';
-echo 'First: ' . $collection->first() . '<br>';
-echo 'Last: ' . $collection->last() . '<br>';
-echo 'Item 2: ' . $collection->getElementAt(1) . '<br>';
-echo 'Index of item 1: ' . $collection->getIndexOf(1) . '<br>';
-echo 'Index of item 2: ' . $collection->getIndexOf(2) . '<br>';
+// $collection = new Collection([1, 2, 3]);
+// echo json_encode($collection->toList()) . '<br>';
+// echo 'First: ' . $collection->first() . '<br>';
+// echo 'Last: ' . $collection->last() . '<br>';
+// echo 'Item 2: ' . $collection->getElementAt(1) . '<br>';
+// echo 'Index of item 1: ' . $collection->getIndexOf(1) . '<br>';
+// echo 'Index of item 2: ' . $collection->getIndexOf(2) . '<br>';
 ?>
 
 <h1 class="text-center red">Welcome to <?php echo SITE_TITLE ?>!</h1>

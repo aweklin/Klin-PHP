@@ -5,10 +5,14 @@ use Framework\Utils\Date;
 use Framework\Core\App;
 use Framework\Infrastructure\Cookie;
 use App\Src\Models\User;
+use Framework\Core\Json;
+use Framework\Core\Response;
 use Framework\Core\Router;
 use Framework\Infrastructure\DependencyContainer;
 use Framework\Infrastructure\ErrorLogger;
+use Framework\Interfaces\IJson;
 use Framework\Interfaces\ILogger;
+use Framework\Interfaces\IResponse;
 
 /**
  * 
@@ -68,18 +72,18 @@ spl_autoload_register(function($className) {
 
 $dependencyContainer = new DependencyContainer();
 
+// statutory dependencies registration
 $dependencyContainer->register(ILogger::class, ErrorLogger::class);
+$dependencyContainer->register(IResponse::class, Response::class);
+$dependencyContainer->register(IJson::class, Json::class);
+
+// user specific dependencies registration
 require_once (PATH_APP_CONFIG . DS . 'dependencies.php');
 
 // These two lines are for inflection purpose only to inflect class names.
 $inflection = new Inflection();
 
 Date::setTimeZone(TIME_ZONE);
-
-// login user from cookie
-if (Cookie::exists(SECURITY_COOKIE_REMEMBER_ME_NAME)) {
-    User::loginFromCookie();
-}
 
 if (isset($requestUrl)) {
     // initialize app and route request

@@ -8,11 +8,39 @@ use Framework\Utils\Str;
 
 class Router implements IRouter {
 
+    private array $_routes = [];
     private IDependencyContainer $_dependencyContainer;
 
     public function __construct(IDependencyContainer $dependencyContainer) {
         $this->_dependencyContainer = $dependencyContainer;
     }
+
+    function get(string $route, callable|array $action) : self {
+        $this->_register('get', $route, $action);
+
+        return $this;
+    }
+
+    function post(string $route, callable|array $action) : self {
+        $this->_register('post', $route, $action);
+
+        return $this;
+    }
+
+    function put(string $route, callable|array $action) : self {
+        $this->_register('put', $route, $action);
+
+        return $this;
+    }
+
+    function delete(string $route, callable|array $action) : self {
+        $this->_register('delete', $route, $action);
+
+        return $this;
+    }
+
+
+
     
     public function route(array $url) : void {
         $controller     = '';
@@ -78,6 +106,10 @@ class Router implements IRouter {
             $controllerClass->response->setTitle('Not Found!');
         }
         call_user_func_array([$controllerClass, $action], $parameters);
+    }
+
+    private function _register(string $requestMethod, string $route, callable|array $action) {
+        $this->_routes[$requestMethod][$route] = $action;
     }
 
 }

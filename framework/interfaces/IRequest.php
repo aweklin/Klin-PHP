@@ -3,6 +3,9 @@
 namespace Framework\Interfaces;
 
 interface IRequest {
+    /** Returns the request method */
+    function getMethod() : string;
+
     /**
      * Returns the validation errors
      */

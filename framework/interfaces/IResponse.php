@@ -76,7 +76,6 @@ interface IResponse {
      * @return void
      */
     function json(bool $hasError, string $message, array $data = null);
-    function jsonUnsupportedRequest(string $supportedRequestType);
 
     /**
      * Removes all HTML tags and displays json encoded result.

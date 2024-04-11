@@ -197,11 +197,6 @@ final class Response implements IResponse {
         echo json_encode(['hasError' => $hasError, 'message' => $message, 'data' => $data]);
     }
 
-    public function jsonUnsupportedRequest(string $supportedRequestType) {
-        http_response_code(405);
-        $this->json(true, Str::toUpper($_SERVER['REQUEST_METHOD']) . " method not allowed. Only a {$supportedRequestType} is supported.");
-    }
-
     /**
      * Removes all HTML tags and displays json encoded result.
      * 

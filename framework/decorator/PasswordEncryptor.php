@@ -22,7 +22,7 @@ abstract class PasswordEncryptor {
      */
     protected function _validatePasswordForEncryption(string $password, string $fieldName = 'Password') {
         if (Str::isEmpty($password))
-            throw new InvalidArgumentException("${fieldName} is required.");    
+            throw new InvalidArgumentException("$fieldName is required.");    
     }
 
     /**

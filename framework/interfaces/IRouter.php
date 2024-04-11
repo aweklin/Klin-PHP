@@ -14,4 +14,9 @@ interface IRouter {
      * @param array $url The request url.
      */
     function route(array $url) : void;
+
+    function get(string $route, callable|array $action) : self;
+    function post(string $route, callable|array $action) : self;
+    function put(string $route, callable|array $action) : self;
+    function delete(string $route, callable|array $action) : self;
 }

@@ -63,7 +63,7 @@ final class Request implements IRequest {
      */
     public function isPost(array $expectedItems = []) : bool {        
         $this->_validatePayload($expectedItems);
-        return $this->_getRequestMethod() === 'post';
+        return $this->getMethod() === 'post';
     }
 
     /**
@@ -72,7 +72,7 @@ final class Request implements IRequest {
      * @return bool
      */
     public function isGet() : bool {
-        return $this->_getRequestMethod() === 'get';
+        return $this->getMethod() === 'get';
     }
 
     /**
@@ -84,7 +84,7 @@ final class Request implements IRequest {
      */
     public function isPut(array $expectedItems = []) : bool {        
         $this->_validatePayload($expectedItems);
-        return $this->_getRequestMethod() === 'put';
+        return $this->getMethod() === 'put';
     }
 
     /**
@@ -93,7 +93,7 @@ final class Request implements IRequest {
      * @return bool
      */
     public function isDelete() : bool {
-        return $this->_getRequestMethod() === 'delete';
+        return $this->getMethod() === 'delete';
     }
 
     /**
@@ -179,7 +179,7 @@ final class Request implements IRequest {
      * 
      * @return string
      */
-    private function _getRequestMethod() : string {
+    public function getMethod() : string {
         return Str::toLower($_SERVER['REQUEST_METHOD']);
     }
 
@@ -192,19 +192,12 @@ final class Request implements IRequest {
 
         $postData = null;
         if ($this->isPost()) {
-            $postData = $_POST; // this is probably coming from a form
+            $postData = json_decode(file_get_contents ('php://input'));//$_POST; // this is probably coming from a form
         }
         if ($this->isPut()) {
             parse_str(file_get_contents('php://input'), $_PUT);
             foreach($_PUT as $item) {
-                $postData = \json_decode($item, true);
-            }
-        }
-        if (!$postData) {   
-            // this may be coming from api client like PostMan
-            $postData = file_get_contents("php://input");
-            if ($postData) {
-                $postData = json_decode($postData);
+                $postData = json_decode($item);
             }
         }
         
@@ -215,6 +208,11 @@ final class Request implements IRequest {
             // set the request data [array]
             $this->_data = [];
             $this->_convertRequestObjectToArray($this->_requestObject, $this->_data);
+        }
+
+        if (!$this->_data && in_array(Str::toLower($this->getMethod()), ['post', 'put'])) {
+            // one last trial
+            $this->_data = $_REQUEST;
         }
     }
     
