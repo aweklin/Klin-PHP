@@ -3,10 +3,7 @@
 namespace Framework\Core;
 
 use \Exception;
-use \stdClass;
 use Framework\Core\Database;
-use Framework\Interfaces\IDatabase;
-use Framework\Infrastructure\{ErrorLogger};
 use Framework\Utils\{Str, Ary, Date};
 use Framework\Interfaces\ILogger;
 use PDO;
@@ -16,7 +13,7 @@ use PDO;
  * 
  * @author Akeem Aweda | akeem@aweklin.com | +2347085287169
  */
-class Model implements IDatabase {
+class Model {
 
     protected Database $database;
     
@@ -38,10 +35,10 @@ class Model implements IDatabase {
     public PDO|null $pdo;
     public int $rowCount;
 
-    public function __construct(string $tableName = '') {
-        $this->_logger = new ErrorLogger();
+    public function __construct(ILogger $logger, string $tableName = '') {
+        $this->_logger = $logger;
 
-        $this->database = Database::getInstance();
+        $this->database = Database::getInstance($this->_logger);
         if ($this->database->hasError())
             $this->_errorMessage = $this->database->getErrorMessage();
             
@@ -226,20 +223,40 @@ class Model implements IDatabase {
         return $this->where($field, 'Is Not Null');
     }
 
-    public function withOne(string $foreignTableName, string $foreignFieldName = '', string $primaryFieldName = 'id') : Model {
-        if(Str::isEmpty($foreignTableName)) throw new Exception("Foreign field table name is required for {$this->_table} in order to use the withOne method.");
-        if(Str::isEmpty($foreignFieldName)) 
-            $foreignFieldName = "{$foreignTableName}_id";
+    public function withOne(string $foreignTableName, string $foreignFieldName = '', string $primaryFieldName = 'id') : Model {    
+        global $inflection;
 
-        return $this->addRelationship(Database::RELATIONSHIP_CHILD, $this->_table, $foreignFieldName, $foreignTableName, $primaryFieldName);
+        if(Str::isEmpty($foreignTableName))
+            throw new Exception("Foreign field table name is required for {$this->_table} in order to use the withOne method.");
+        if(Str::isEmpty($foreignFieldName)) 
+            $foreignFieldName = "{$inflection->singularize($foreignTableName)}_id";
+
+        return $this->addRelationship(
+            Database::RELATIONSHIP_CHILD,
+            $this->_table,
+            $foreignFieldName,
+            $foreignTableName,
+            $primaryFieldName);
+    }
+
+    public function withOneGrandChild(string $primaryTableName = '', string $primaryFieldName = '', string $foreignTableName = '', string $foreignFieldName = '', string $orderBy = '') : Model {
+        return $this->addRelationship(Database::RELATIONSHIP_GRAND_CHILD, $primaryTableName, $primaryFieldName, $foreignTableName, $foreignFieldName, $orderBy);
     }
 
     public function withMany(string $foreignTableName, string $foreignFieldName = '', string $primaryFieldName = 'id') : Model {
-        if(Str::isEmpty($foreignTableName)) throw new Exception("Foreign field table name is required for {$this->_table} in order to use the withMany method.");
+        global $inflection;
+        
+        if(Str::isEmpty($foreignTableName))
+            throw new Exception("Foreign field table name is required for {$this->_table} in order to use the withMany method.");
         if(Str::isEmpty($foreignFieldName)) 
-            $foreignFieldName = "{$foreignTableName}_id";
+            $foreignFieldName = "{$inflection->singularize($foreignTableName)}_id";
 
-        return $this->addRelationship(Database::RELATIONSHIP_CHILDREN, $this->_table, $primaryFieldName, $foreignTableName, $foreignFieldName);
+        return $this->addRelationship(
+            Database::RELATIONSHIP_CHILDREN,
+            $this->_table,
+            $primaryFieldName,
+            $foreignTableName,
+            $foreignFieldName);
     }
 
     public function join(string $clause) : Model {
@@ -266,8 +283,17 @@ class Model implements IDatabase {
         string $foreignTableName = '', 
         string $foreignFieldName = '', 
         string $orderBy = '') : Model {
+            
+        global $inflection;
+
         if (Str::isEmpty($primaryTableName)) $primaryTableName = $this->_table;
         if (Str::isEmpty($primaryFieldName)) $primaryFieldName = $this->_idField;
+        
+        if (Str::isEmpty($primaryFieldName) && !Str::isEmpty($foreignTableName)) 
+            $primaryFieldName = $inflection->singularize($foreignTableName) . '_' . $this->_idField;
+
+        if (Str::isEmpty($foreignFieldName) && !Str::isEmpty($foreignTableName)) 
+            $foreignFieldName = 'id';
 
         $this->_relationships[Str::toLower($type)][] = [
             'primaryTable'  => Str::toLower($primaryTableName),
@@ -368,7 +394,7 @@ class Model implements IDatabase {
             $results = [];
             foreach($queryResult as $result) {
                 $model = get_called_class();
-                $object = new $model();
+                $object = new $model($this->_logger);
                 $object->_set($result);
                 array_push($results, $this->getData($object));
             }
@@ -389,14 +415,14 @@ class Model implements IDatabase {
         return $this->database->executeStoredProcedure($procedureName, $parameters, $isSelectingRecords, $objectOutputName);
     }
 
-    public function find() {
+    public function find() : ?Model {
         $parameters = $this->_composeQueryParts(false);
 
         $result = $this->database->find($this->_table, $parameters);
 
         $this->_clear();
 
-        return ($result) ? $this->getData($result) : null;
+        return $result ? $this->getData($result) : null;
     }
 
     public function findObject() {
@@ -408,7 +434,7 @@ class Model implements IDatabase {
 
         $model = get_called_class();
 
-        $object = new $model();
+        $object = new $model($this->_logger);
         if ($result) {
             foreach($result as $key => $value) {
                 $object->$key = $value;
@@ -418,13 +444,7 @@ class Model implements IDatabase {
         return $object;
     }
 
-    private function _set($result) {
-        foreach($result as $key => $value) {
-            $this->$key = $value;
-        }
-    }
-
-    public function findById($value) {
+    public function findById($value) : ?Model {
         return $this->where("`{$this->_idField}`", '=', $value)->find();
     }
 
@@ -467,9 +487,9 @@ class Model implements IDatabase {
             if (!array_key_exists(DEFAULT_FIELD_MODIFIED, $fields) && property_exists($this, DEFAULT_FIELD_MODIFIED)) {
                 $fields[DEFAULT_FIELD_MODIFIED] = Date::now();
             }
-            // if (!array_key_exists(DEFAULT_FIELD_DELETED, $fields) && property_exists($this, DEFAULT_FIELD_DELETED)) {
-            //     $fields[DEFAULT_FIELD_DELETED] = 0;
-            // }
+            if (!array_key_exists(DEFAULT_FIELD_DELETED, $fields) && property_exists($this, DEFAULT_FIELD_DELETED)) {
+                $fields[DEFAULT_FIELD_DELETED] = 0;
+            }
         } else {
             
             // check for default fields and set their values
@@ -574,10 +594,10 @@ class Model implements IDatabase {
         return (int) $result;
     }
 
-    public function getData($result) {
+    public function getData($result) : ?Model {
         if (!$result) return null;
 
-        $data = new stdClass();
+        $data = new static($this->_logger);
 
         foreach($result as $key => $value) {
             if (in_array($key, $this->_columnNames)) {
@@ -594,7 +614,7 @@ class Model implements IDatabase {
 
         $result = $this->database->getResult();
 
-        $data = new stdClass();
+        $data = new static();
         
         foreach($result as $key => $value) {
             $data->$key = $value;
@@ -603,7 +623,7 @@ class Model implements IDatabase {
         return $data;
     }
 
-    public function getSingleDataFromResult($item) {
+    public function getSingleDataFromResult(mixed $item) : ?Model {
         $data = $this->getDataFromResult($item);
         if (!$data) return null;
         $ary = Ary::convertFromObject($data);

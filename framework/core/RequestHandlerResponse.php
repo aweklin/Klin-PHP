@@ -14,5 +14,9 @@ class RequestHandlerResponse {
      * @param string $message Specifies the message being returned to the user.
      * @param array $data Optional - Specifies the data being returned.
      */
-    public function __construct(public bool $hasError, public string $message, public array $data = []) {}
+    public function __construct(
+        public int $responseCode,
+        public bool $hasError,
+        public string $message,
+        public array $data = []) {}
 }

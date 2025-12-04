@@ -83,6 +83,22 @@ final class Date {
         return $result;
     }
 
+    /**
+     * Returns the last day of a given date.
+     * 
+     * @param string $date The date to extract the working days from its month.
+     * @param string $format Specifies the expected output format. This is set to date+time by default. You can use one of the class constants FORMAT_ to specify the expected date format.
+     * 
+     */
+    public static function getLastDayOf(string $date = 'now', string $format = self::FORMAT_YMD) : string {
+        $dateObj = new DateTime($date);
+        $dateObj->modify('last day of');
+        $result = $dateObj->format($format);
+        unset($dateObj);
+        
+        return $result;
+    }
+
     public static function format(string $value, $format = self::FORMAT_YMD_WITH_TIME): string {
         if (Str::isEmpty($value)) return '';
 
@@ -251,6 +267,25 @@ final class Date {
 
     public static function addYear($date = self::NOW, $years = 1, $format = self::FORMAT_YMD_WITH_TIME) {
         return self::_addDate($date, 'Y', $years, $format);
+    }
+
+    public static function parse(string $value) : DateTime {
+        return new DateTime($value);
+    }
+
+    public static function toString(DateTime $date, $format = self::FORMAT_YMD_WITH_TIME) : string {
+        $dateFormatted = $date->format($format);
+        unset($date);
+
+        return $dateFormatted;
+    }
+
+    public static function addMinutes(string $date = self::NOW, int $minutes = 0) : string {
+        $time = new DateTime($date, self::$timeZone);
+        $time->add(new DateInterval("PT{$minutes}M"));
+        $newDateTime = $time->format('Y-m-d H:i:s');
+
+        return $newDateTime;
     }
 
     private static function _addDate($value = self::NOW, $datePart = 'D', $interval = 1, $format = self::FORMAT_YMD_WITH_TIME) {

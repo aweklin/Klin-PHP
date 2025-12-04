@@ -35,8 +35,7 @@ class DateRule extends ValidationRuleBase {
         if (Str::isEmpty($value)) return true;
         $this->errorMessage = sprintf($this->errorMessage, $value);
 
-        // credits: https://stackoverflow.com/questions/13194322/php-regex-to-check-date-is-in-yyyy-mm-dd-format#answer-13194398
         $dt = DateTime::createFromFormat("Y-m-d", str_replace('/', '-', $value));
-        return $dt !== false && !array_sum($dt::getLastErrors());
+        return $dt !== false;
     }
 }

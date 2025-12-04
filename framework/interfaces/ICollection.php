@@ -7,13 +7,17 @@ use IteratorAggregate;
 /**
  * 
  * Represents a collection of objects that can be individually accessed by index.
+ * 
+ * @template T
  */
 interface ICollection extends IteratorAggregate {
 
     /** 
      * Returns a list that contains elements from the input sequence.
+     * 
+     * @return T[]
      */
-    function toList() : array;
+    function all() : array;
 
     /**
      * Returns a number that represents how many elements in the specified sequence.
@@ -21,28 +25,39 @@ interface ICollection extends IteratorAggregate {
     function count() : int;
 
     /**
-     * Returns the first element of a sequence or null if the list is empty.
+     * Determines if the collection is empty or not.
      */
-    function first() : mixed;
+    function isEmpty(): bool;
+
+    /**
+     * Returns the first element of a sequence or null if the list is empty.
+     * 
+     * @return T|null
+     */
+    function first();
 
     /**
      * Returns the last element of a sequence or null if the list is empty.
+     * 
+     * @return T|null
      */
-    function last() : mixed;
+    function last();
 
     /**
      * Adds an item to a sequence.
      * 
+     * @param T $item The object to add to the sequence.
+     * 
      * @throws InvalidOperationException if the item can not be added due to it having a type different from the existing type.
      * 
-     * @return ICollection
+     * @return ICollection<T>
      */
-    function add(mixed $item) : ICollection;
+    function add($item) : ICollection;
 
     /**
      * Removes a given element from a sequence.
      * 
-     * @param mixed $item The object to remove from the sequence.
+     * @param T $item The object to remove from the sequence.
      * 
      * @throws ItemNotFoundException if the given item could not be found in the sequence.
      * 
@@ -65,11 +80,11 @@ interface ICollection extends IteratorAggregate {
     /**
      * Determines whether a sequence contains a specific value.
      * 
-     * @param mixed $item The object to locate in the sequence.
+     * @param T $item The object to locate in the sequence.
      * 
      * @return bool true if item is found in the ICollection; otherwise, false.
      */
-    function contains(mixed $item) : bool;
+    function contains($item) : bool;
 
     /**
      * Returns the element at a specified index in a sequence.
@@ -79,23 +94,22 @@ interface ICollection extends IteratorAggregate {
      * @throws NoItemFoundException if the collection is empty.
      * @throws ItemNotFoundException if the given item could not be found in the sequence at the given index.
      * 
-     * @return mixed
+     * @return T
      */
-    function getElementAt(int $index) : mixed;
+    function getElementAt(int $index);
 
     /**
      * Returns the element at a specified index in a sequence or -1 if nothing was found.
      * 
-     * @param mixed $item The object to locate in the sequence.
+     * @param T $item The object to locate in the sequence.
      * 
      * @return int The index of item if found in the list; otherwise, -1
      */
-    function getIndexOf(mixed $item) : int;
+    function getIndexOf($item) : int;
 
     /**
      * Returns the element at a specified index in a sequence or -1 if nothing was found.
      * 
-     * @param mixed $item The object to locate in the sequence.
      * @param string $key The element key to search with.
      * 
      * @throws InvalidOperationException
@@ -107,9 +121,9 @@ interface ICollection extends IteratorAggregate {
     /**
      * Adds the elements of the specified collection to the end of the list and returns the merged list.
      * 
-     * @param ICollection $collection 
+     * @param ICollection<T> $collection 
      * 
-     * @return array Containing both old and new sequences of the collection.
+     * @return T[] Containing both old and new sequences of the collection.
      */
     function merge(ICollection $collection) : array;
 }

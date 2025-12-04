@@ -3,16 +3,15 @@
 use Framework\Libs\Inflection;
 use Framework\Utils\Date;
 use Framework\Core\App;
-use Framework\Infrastructure\Cookie;
-use App\Src\Models\User;
 use Framework\Core\Json;
+use Framework\Core\Request;
 use Framework\Core\Response;
 use Framework\Core\Router;
 use Framework\Infrastructure\DependencyContainer;
-use Framework\Infrastructure\ErrorLogger;
 use Framework\Interfaces\IJson;
 use Framework\Interfaces\ILogger;
 use Framework\Interfaces\IResponse;
+use Framework\Interfaces\IRequest;
 
 /**
  * 
@@ -54,6 +53,8 @@ require_once (PATH_APP_CONFIG . DS . 'model.php');
 require_once (PATH_APP_CONFIG . DS . 'controller.php');
 require_once (PATH_APP_CONFIG . DS . 'mail.php');
 require_once (PATH_APP_CONFIG . DS . 'security.php');
+require_once (PATH_FRAMEWORK_INTERFACES . DS . 'ILogger.php');
+require_once (PATH_FRAMEWORK_CORE . DS . 'DefaultLogger.php');
 
 // autoload classes with anonymous function
 spl_autoload_register(function($className) {
@@ -73,7 +74,8 @@ spl_autoload_register(function($className) {
 $dependencyContainer = new DependencyContainer();
 
 // statutory dependencies registration
-$dependencyContainer->register(ILogger::class, ErrorLogger::class);
+$dependencyContainer->register(ILogger::class, DefaultLogger::class);
+$dependencyContainer->register(IRequest::class, Request::class);
 $dependencyContainer->register(IResponse::class, Response::class);
 $dependencyContainer->register(IJson::class, Json::class);
 

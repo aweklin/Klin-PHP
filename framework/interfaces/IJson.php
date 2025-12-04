@@ -24,7 +24,7 @@ interface IJson {
      * The request has been fulfilled, resulting in the creation of a new resource.
      * Returns 201 status code
      */
-    function created(string $message = 'Resource created successfully') : void;
+    function created(string $message = 'Resource created successfully', array|null $data = null) : void;
     
     /**
      * The request has been accepted for processing, but the processing has not been completed. 
@@ -32,14 +32,14 @@ interface IJson {
      * 
      * Returns 202 status code
      */
-    function accepted(string $message = 'Resource accepted successfully') : void;
+    function accepted(string $message = 'Resource accepted successfully', array|null $data = null) : void;
     
     /**
      * The server successfully processed the request, and is not returning any content.
      * 
      * Returns 204 status code
      */
-    function noContent(string $message = 'Resource accepted successfully') : void;
+    function noContent(string $message = 'Resource accepted successfully', array|null $data = null) : void;
 
      /**
      * The server cannot or will not process the request due to an apparent client error (e.g., malformed request syntax, size too large, invalid request message framing, or deceptive request routing).
@@ -98,5 +98,12 @@ interface IJson {
      * 
      * Returns 500 status code.
      */
-    function error(string $message = 'An internal server error occurred.') : void;
+    function error(string $message = 'An internal server error occurred.', array|null $data = null) : void;
+
+    /**
+     * Standard response for successful HTTP requests. The actual response will depend on the request method used. 
+     * In a GET request, the response will contain an entity corresponding to the requested resource. 
+     * In a POST request, the response will contain an entity describing or containing the result of the action.
+     */
+    function completed(bool $hasError = false, string $message = '', array|null $data = null, int $statusCode = 200) : void;
 }

@@ -4,9 +4,9 @@ declare(strict_types = 1);
 
 namespace Framework\Core;
 
-use \Exception;
+use AllowDynamicProperties;
 use Framework\Core\App;
-use Framework\Infrastructure\{Session, ErrorLogger};
+use Framework\Infrastructure\Session;
 use Framework\Interfaces\IJson;
 use Framework\Interfaces\ILogger;
 use Framework\Interfaces\IResponse;
@@ -17,6 +17,7 @@ use Framework\Utils\Str;
  * 
  * @author Akeem Aweda | akeem@aweklin.com | +2347085287169
  */
+#[AllowDynamicProperties]
 final class Response implements IResponse {
 
     private string $_controllerName = '';
@@ -51,14 +52,27 @@ final class Response implements IResponse {
      */
     private const FOOTER = 'footer';
 
-    public function __construct(string $controllerName, string $viewName, public IJson $json) {
+    public IJson $json;
+
+    public function __construct(
+        string $controllerName,
+        string $viewName,
+        ILogger $logger) {
         global $inflection;
 
         $this->_controllerName = $controllerName;
         $this->_viewName = $viewName;
         $this->title = ucwords($inflection->spacirize($viewName));
 
-        $this->_logger = new ErrorLogger();
+        $this->_logger = $logger;
+        $this->json = new Json($logger);
+    }
+
+    /**
+     * Specifies the logger implementation to use
+     */
+    public function useLogger(ILogger $logger) : void {
+        $this->_logger = $logger;
     }
 
     /**
@@ -170,49 +184,13 @@ final class Response implements IResponse {
                 Session::set(APP_MESSAGE, 'There was no view found with the name "' . $viewName . '.php"');
                 Session::set(APP_MESSAGE_TYPE, 'danger');
             } else {
-                $this->_logger->log('Error rendering view at location: ' . $viewLocation);
+                $this->_logger->error('Error rendering view at location: ' . $viewLocation);
             }
             include_once(PATH_APP_VIEWS . DS . 'error' . DS . 'not_found.php');
         }
             
         // render layout file
         include_once(PATH_APP_VIEWS_SHARED . DS . $this->layout . '.php');
-    }
-
-    /**
-     * Displays json encoded result.
-     * 
-     * @param bool $hasError Sets the hasError to the value passed.
-     * @param string $message Specifies the message sent to the user.
-     * @param array $data Specifies the data to be sent along the json output.
-     * 
-     * @return void
-     */
-    public function json(bool $hasError, string $message, array $data = null) {
-        try {
-            header('Content-Type: application/json');
-        } catch (Exception $e) {
-            $this->_logger->log('Error setting Content-Type: application/json: ' . $e->getMessage());
-        }
-        echo json_encode(['hasError' => $hasError, 'message' => $message, 'data' => $data]);
-    }
-
-    /**
-     * Removes all HTML tags and displays json encoded result.
-     * 
-     * @param bool $hasError Sets the hasError to the value passed.
-     * @param string $message Specifies the message sent to the user.
-     * @param array $data Specifies the data to be sent along the json output.
-     * 
-     * @return void
-     */
-    public function jsonRemoveHTML(bool $hasError, string $message, array $data = []) {
-        $message = str_replace("<ul class=\"validation-errors\">\r\n", "", $message);
-        $message = str_replace("</li>\r\n", "\r\n", $message);
-        $message = str_replace("</li></ul>", "", $message);
-        $message = str_replace("<li>", "", $message);
-
-        $this->json($hasError, $message, $data);
     }
 
     /**

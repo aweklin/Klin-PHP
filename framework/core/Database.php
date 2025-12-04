@@ -2,11 +2,12 @@
 
 namespace Framework\Core;
 
+use Framework\Exceptions\ExceptionBase;
 use \PDO;
 use \PDOException;
 use Framework\Interfaces\IDatabase;
 use Framework\Utils\{Str, Ary};
-use Framework\Infrastructure\ErrorLogger;
+use Framework\Interfaces\ILogger;
 
 /**
  * Encapsulates the various database operations on MySQL server
@@ -56,8 +57,8 @@ final class Database implements IDatabase {
 
     private const CANNOT_CONNECT = 'Unable to establish database connection.';
 
-    private function __construct() {
-        $this->_logger = new ErrorLogger();
+    private function __construct(ILogger $logger) {
+        $this->_logger = $logger;
         $this->_operators = [Database::EQUALS, Database::NOT_EQUALS, Database::LESS_THAN, Database::LESS_OR_EQUALS, 
             Database::GRATER_THAN, Database::GRATER_OR_EQUALS, Database::LIKE, Database::NOT_LIKE, Database::IN, 
             Database::NO_IN, Database::IS_NULL, Database::IS_NOT_NULL, Database::AND, Database::OR];
@@ -71,13 +72,13 @@ final class Database implements IDatabase {
                                 ]);
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log(convertExceptionToStringForLogging($e));
+            $this->_logger->error(ExceptionBase::convertExceptionToStringForLogging($e));
         }
     }
 
-    public static function getInstance() : Database {
+    public static function getInstance(ILogger $logger) : Database {
         if (!isset(self::$instance)) {
-            self::$instance = new self();
+            self::$instance = new self($logger);
         }
 
         return self::$instance;
@@ -211,16 +212,16 @@ final class Database implements IDatabase {
                     $errorInfo = print_r($this->_query->errorInfo()['2'], true);
                     $this->_errorMessage = (IS_DEVELOPMENT ? 'Error executing query: ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo : USER_FRIENDLY_ERROR_MESSAGE);
                     if (!IS_DEVELOPMENT) {
-                        $this->_logger->log('Error executing ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo);
+                        $this->_logger->error('Error executing ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo);
                     }
                 }
             }
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log(
+            $this->_logger->error(
                 'Error executing: ' . PHP_EOL . $sql . PHP_EOL . PHP_EOL . 
-                'Parameters: ' . PHP_EOL . print_r($parameters, true) . PHP_EOL . 
-                'Error message: ' . $e->getMessage() . PHP_EOL
+                    'Parameters: ' . PHP_EOL . print_r($parameters, true) . PHP_EOL . 
+                    'Error message: ' . $e->getMessage() . PHP_EOL
             );
         }
 
@@ -260,7 +261,7 @@ final class Database implements IDatabase {
         if (!$this->pdo) {
             $this->_errorMessage = self::CANNOT_CONNECT;
             if (!IS_DEVELOPMENT) {
-                $this->_logger->log($this->_errorMessage);
+                $this->_logger->error($this->_errorMessage);
             }
             return null;
         }
@@ -338,7 +339,7 @@ final class Database implements IDatabase {
                     $errorInfo = print_r($this->_query->errorInfo()['2'], true);
                     $this->_errorMessage = (IS_DEVELOPMENT ? 'Error executing query: ' . PHP_EOL . $procedureName . PHP_EOL . 'Reason: ' . $errorInfo : USER_FRIENDLY_ERROR_MESSAGE);
                     if (!IS_DEVELOPMENT) {
-                        $this->_logger->log('Error executing ' . PHP_EOL . $procedureName . PHP_EOL . 'Reason: ' . $errorInfo);
+                        $this->_logger->error('Error executing ' . PHP_EOL . $procedureName . PHP_EOL . 'Reason: ' . $errorInfo);
                     }
                 }
             }
@@ -347,7 +348,7 @@ final class Database implements IDatabase {
             
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log(convertExceptionToStringForLogging($e));
+            $this->_logger->error(ExceptionBase::convertExceptionToStringForLogging($e));
             return null;
         }
     }
@@ -368,7 +369,7 @@ final class Database implements IDatabase {
         if (!$this->pdo) {
             $this->_errorMessage = self::CANNOT_CONNECT;
             if (!IS_DEVELOPMENT) {
-                $this->_logger->log($this->_errorMessage);
+                $this->_logger->error($this->_errorMessage);
             }
             return [];
         }
@@ -391,7 +392,7 @@ final class Database implements IDatabase {
         if (!$sql) {
             $this->_errorMessage = 'SQL statement is required.';
             if (!IS_DEVELOPMENT) {
-                $this->_logger->log($this->_errorMessage);
+                $this->_logger->error($this->_errorMessage);
             }
             return [];
         }
@@ -509,13 +510,13 @@ final class Database implements IDatabase {
                     $errorInfo = print_r($this->_query->errorInfo()['2'], true);
                     $this->_errorMessage = (IS_DEVELOPMENT ? 'Error executing query: ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo : USER_FRIENDLY_ERROR_MESSAGE);
                     if (!IS_DEVELOPMENT) {
-                        $this->_logger->log('Error executing ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo);
+                        $this->_logger->error('Error executing ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo);
                     }
                 }
             }
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log($e->getMessage() . PHP_EOL . $sql . PHP_EOL . print_r($parameters, true));
+            $this->_logger->error($e->getMessage() . PHP_EOL . $sql . PHP_EOL . print_r($parameters, true));
         }
 
         return $this->_data;
@@ -610,7 +611,7 @@ final class Database implements IDatabase {
                 $errorInfo = print_r($queryResult->errorInfo()['2'], true);
                 $this->_errorMessage = (IS_DEVELOPMENT ? 'Error executing query: ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo : USER_FRIENDLY_ERROR_MESSAGE);
                 if (!IS_DEVELOPMENT) {
-                    $this->_logger->log('Error executing ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo);
+                    $this->_logger->error('Error executing ' . PHP_EOL . $sql . PHP_EOL . 'Reason: ' . $errorInfo);
                 }
             }
         }
@@ -678,7 +679,7 @@ final class Database implements IDatabase {
                         $errorInfo = print_r($this->_query->errorInfo()['2'], true);
                         $this->_errorMessage = (IS_DEVELOPMENT ? 'Error executing query: ' . PHP_EOL . $childSql . PHP_EOL . 'Reason: ' . $errorInfo : USER_FRIENDLY_ERROR_MESSAGE);
                         if (!IS_DEVELOPMENT) {
-                            $this->_logger->log('Error executing ' . PHP_EOL . $childSql . PHP_EOL . 'Reason: ' . $errorInfo);
+                            $this->_logger->error('Error executing ' . PHP_EOL . $childSql . PHP_EOL . 'Reason: ' . $errorInfo);
                         }
                     }
                 }
@@ -744,7 +745,7 @@ final class Database implements IDatabase {
             $this->query($sql, [], $paramsAndValues);
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log(convertExceptionToStringForLogging($e));
+            $this->_logger->error(ExceptionBase::convertExceptionToStringForLogging($e));
         }
     }
 
@@ -782,7 +783,7 @@ final class Database implements IDatabase {
             $this->query($sql, [], $paramsAndValues);
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log(convertExceptionToStringForLogging($e));
+            $this->_logger->error(ExceptionBase::convertExceptionToStringForLogging($e));
         }
     }
 
@@ -807,7 +808,7 @@ final class Database implements IDatabase {
             $this->query($sql, [], $paramsAndValues);
         } catch (PDOException $e) {
             $this->_errorMessage = (!IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-            $this->_logger->log(convertExceptionToStringForLogging($e));
+            $this->_logger->error(ExceptionBase::convertExceptionToStringForLogging($e));
         }
     }
 

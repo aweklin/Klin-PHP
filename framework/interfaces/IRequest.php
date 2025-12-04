@@ -12,6 +12,11 @@ interface IRequest {
     function getValidationErrors() : string;
 
     /**
+     * Specifies if html tags should be stripped from validation errors
+     */
+    function stripHtmlFromValidationErrors(bool $removeHtmlFromValidationErrors) : void;
+
+    /**
      * Checks if there is any validation error, based on the expected fields and validation rules supplied.
      */
     function hasValidationErrors() : bool;
@@ -66,7 +71,7 @@ interface IRequest {
     /**
      * Returns a value, indicating wether the post/put request has some missing key(s).
      */
-    function isValid(array $expectedItems) : bool;
+    function isValid(array $expectedItems, bool $validateFormToken = true) : bool;
 
     /**
      * Returns all the missing items from the post/put request as string.
@@ -81,7 +86,21 @@ interface IRequest {
      * 
      * @return mixed
      */
-    function get(string $key, bool $sanitizeInput = true);
+    function get(string $key, bool $sanitizeInput = true, bool $isHeaderKey = false) : mixed;
+
+    /**
+     * Returns the authorization value for this request.
+     * 
+     * @return string|null
+     */
+    function getAuthorizationHeaderValue() : ?string;
+
+    /**
+     * Returns the content type for this request.
+     * 
+     * @return string|null
+     */
+    function getContentTypeHeaderValue() : ?string;
 
     /**
      * Returns the current page uri

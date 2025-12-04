@@ -6,3 +6,6 @@ define('DATABASE_NAME', (IS_DEVELOPMENT ? '' : ''));
 define('DATABASE_USER', (IS_DEVELOPMENT ? '' : ''));
 define('DATABASE_PASSWORD', (IS_DEVELOPMENT ? '' : ''));
 define('DATABASE_TABLE_NAMES_PLURALIZED', true);
+define('ADMIN_USERNAME', 'admin');
+define('ADMIN_EMAIL', 'akeem@aweklin.com');
+define('ADMIN_PASSWORD', 'Ad3kl1n@');

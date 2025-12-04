@@ -9,7 +9,7 @@ use Framework\Core\{Request, Response};
 use Framework\Infrastructure\Session;
 use Framework\Utils\Str;
 use App\Src\Models\User;
-use Framework\Infrastructure\ErrorLogger;
+use DefaultLogger;
 use Framework\Interfaces\ILogger;
 use Framework\Interfaces\IRequest;
 use Framework\Interfaces\IResponse;
@@ -38,18 +38,26 @@ class Controller {
     public function __construct(string $controller, string $action) {
         $this->_controller  = $controller;
         $this->_action      = $action;
-        $this->logger       = new ErrorLogger();
+        $this->logger       = new DefaultLogger();
         $this->request      = new Request();
         $this->response     = new Response(
             Str::toLower(str_replace(CONTROLLER_SUFFIX, '', $controller)), 
             $action, 
-            new Json($this->logger));
+            $this->logger);
 
         Session::set(APP_MESSAGE, null);
 
         if (isset($this->confirmAuthorization)) {
 			$this->_validateAuthentication();
 		}
+    }
+
+    /**
+     * Specifies the logger implementation to use
+     */
+    public function useLogger(ILogger $logger) : void {
+        $this->_logger = $logger;
+        $this->response->useLogger($logger);
     }
 
     /**

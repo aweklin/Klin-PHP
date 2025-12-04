@@ -10,6 +10,8 @@ use Framework\Core\Validators\Rules\{RequiredRule, MinimumLengthRule, MaximumLen
 use App\Src\Models\UserSession;
 use Exception;
 use Framework\Decorator\PasswordEncryptor;
+use Framework\Enums\LogLevel;
+use Framework\Interfaces\ILogger;
 use Framework\Interfaces\IPasswordVerifier;
 use PDOException;
 
@@ -23,8 +25,8 @@ class User extends Model {
 
     private PasswordEncryptor $_passwordEncryptor;
 
-    public function __construct(string $idOrUsername = '') {
-        parent::__construct();
+    public function __construct(ILogger $logger, string $idOrUsername = '') {
+        parent::__construct($logger);
 
         self::$_isLoggedIn = false;
 
@@ -71,13 +73,13 @@ class User extends Model {
     public function login(string $password, bool $rememberMe = false) {
         if (!$this->_idField) {
             $this->_errorMessage = 'Please call the findByUsername method first.';
-            return;
+            return false;
         }
         // verify password
         $encryptor = (object) $this->_passwordEncryptor;
         if ($encryptor instanceof IPasswordVerifier && !$encryptor->isVerified($password, $this->password)) {
-            $this->_errorMessage = 'Invalid password.';
-            return;
+            $this->_errorMessage = 'Invalid username or password.';
+            return false;
         }
 
         Session::set(SECURITY_CURRENT_LOGGED_IN_USER_ID, $this->{$this->_idField});
@@ -95,7 +97,7 @@ class User extends Model {
 
             try {
                 // delete previous cookie stored
-                $userSession = new UserSession();
+                $userSession = new UserSession($this->_logger);
                 $userSession->pdo     = $this->pdo;
                 $userSession->where('`user_id`', '=', $this->{$this->_idField})
                     ->_and()
@@ -106,7 +108,7 @@ class User extends Model {
                     Cookie::delete(SECURITY_COOKIE_REMEMBER_ME_NAME);
                     $this->_errorMessage = $userSession->getErrorMessage();
                     unset($userSession);
-                    return;
+                    return false;
                 }
 
                 // capture user session
@@ -119,7 +121,7 @@ class User extends Model {
                     $this->rollbackTransaction();
                     Cookie::delete(SECURITY_COOKIE_REMEMBER_ME_NAME);
                     unset($userSession);
-                    return;
+                    return false;
                 }
 
                 $this->commitTransaction();
@@ -128,13 +130,19 @@ class User extends Model {
             } catch (PDOException $e) {
                 $this->rollbackTransaction();
                 $this->_errorMessage = (IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-                $this->_logger->log($e->getMessage());
+                $this->_logger->log(LogLevel::ERROR, $e->getMessage());
+                
+                return false;
             } catch (Exception $e) {
                 $this->rollbackTransaction();
                 $this->_errorMessage = (IS_DEVELOPMENT ? USER_FRIENDLY_ERROR_MESSAGE : $e->getMessage());
-                $this->_logger->log($e->getMessage());
+                $this->_logger->log(LogLevel::ERROR, $e->getMessage());
+                
+                return false;
             }
         }
+
+        return true;
     }
 
     public static function loginFromCookie() {
@@ -247,6 +255,15 @@ class User extends Model {
 
         $this->id       = $id;
         $this->password = $this->_passwordEncryptor->encrypt($this->password);
+        $this->save();
+    }
+
+    public function createSystemUser() {
+        $this->username = ADMIN_USERNAME;
+        $this->password = $this->_passwordEncryptor->encrypt(ADMIN_PASSWORD);
+        $this->email    = ADMIN_EMAIL;
+        $this->is_deleted= 0;
+        $this->is_admin  = 1;
         $this->save();
     }
 }

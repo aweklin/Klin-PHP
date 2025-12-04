@@ -8,10 +8,42 @@ use Framework\Utils\Str;
 
 class Json implements IJson {
 
+    public const STATUS_CODE_OK = 200;
+    public const STATUS_CODE_CREATED = 201;
+    public const STATUS_CODE_ACCEPTED = 202;
+    public const STATUS_CODE_NO_CONTENT = 204;
+    public const STATUS_CODE_BAD_REQUEST = 400;
+    public const STATUS_CODE_UNAUTHORIZED = 401;
+    public const STATUS_CODE_NOT_FOUND = 404;
+    public const STATUS_CODE_METHOD_NOT_ALLOWED = 405;
+    public const STATUS_CODE_CONFLICT = 409;
+    public const STATUS_CODE_UNSUPPORTED_MEDIA_TYPE = 415;
+    public const STATUS_CODE_UNPROCESSED_ENTITY = 422;
+    public const STATUS_CODE_TOO_MANY_REQUEST = 429;
+    public const STATUS_CODE_INTERNAL_SERVER_ERROR = 500;
+
     private ILogger $_logger;
+    private array $_statusCodeMap = [];
+    private const HTTP_VERSION = 'HTTP/1.1 ';
 
     public function __construct(ILogger $logger) {
         $this->_logger = $logger;
+
+        $this->_statusCodeMap = [
+            self::STATUS_CODE_OK => self::HTTP_VERSION . self::STATUS_CODE_OK . ' OK',
+            self::STATUS_CODE_CREATED => self::HTTP_VERSION . self::STATUS_CODE_CREATED . ' Created',
+            self::STATUS_CODE_ACCEPTED => self::HTTP_VERSION . self::STATUS_CODE_ACCEPTED . ' Accepted',
+            self::STATUS_CODE_NO_CONTENT => self::HTTP_VERSION . self::STATUS_CODE_NO_CONTENT . ' No Content',
+            self::STATUS_CODE_BAD_REQUEST => self::HTTP_VERSION . self::STATUS_CODE_BAD_REQUEST . ' Bad Request',
+            self::STATUS_CODE_UNAUTHORIZED => self::HTTP_VERSION . self::STATUS_CODE_UNAUTHORIZED . ' Unauthorized',
+            self::STATUS_CODE_NOT_FOUND => self::HTTP_VERSION . self::STATUS_CODE_NOT_FOUND . ' Not Found',
+            self::STATUS_CODE_METHOD_NOT_ALLOWED => self::HTTP_VERSION . self::STATUS_CODE_METHOD_NOT_ALLOWED . ' Method Not Allowed',
+            self::STATUS_CODE_CONFLICT => self::HTTP_VERSION . self::STATUS_CODE_CONFLICT . ' Conflict',
+            self::STATUS_CODE_UNSUPPORTED_MEDIA_TYPE => self::HTTP_VERSION . self::STATUS_CODE_UNSUPPORTED_MEDIA_TYPE . ' Unsupported Media Type',
+            self::STATUS_CODE_UNPROCESSED_ENTITY => self::HTTP_VERSION . self::STATUS_CODE_UNPROCESSED_ENTITY . ' Unprocessable Entity',
+            self::STATUS_CODE_TOO_MANY_REQUEST => self::HTTP_VERSION . self::STATUS_CODE_TOO_MANY_REQUEST . ' Too Many Requests',
+            self::STATUS_CODE_INTERNAL_SERVER_ERROR => self::HTTP_VERSION . self::STATUS_CODE_INTERNAL_SERVER_ERROR . ' Internal Server Error',
+        ];
     }
 
     /**
@@ -20,13 +52,7 @@ class Json implements IJson {
      * In a POST request, the response will contain an entity describing or containing the result of the action.
      */
     function ok(bool $hasError = false, string $message = '', array|null $data = null, int $statusCode = 200) : void {
-        http_response_code($statusCode);
-        try {
-            header('Content-Type: application/json');
-        } catch (\Exception $e) {
-            $this->_logger->log('Error setting Content-Type: application/json: ' . $e->getMessage());
-        }
-        echo json_encode(['hasError' => $hasError, 'message' => $message, 'data' => $data]);
+        $this->completed($hasError, $message, $data, $statusCode);
     }
     
     /**
@@ -35,7 +61,7 @@ class Json implements IJson {
      * Returns 200 status code.
      */
     function success(string $message = 'Operation succeeded.', array|null $data = null) : void {
-        $this->ok(false, $message);
+        $this->completed(false, $message, $data, statusCode: self::STATUS_CODE_OK);
     }
     
     /**
@@ -43,8 +69,8 @@ class Json implements IJson {
      * 
      * Returns 201 status code
      */
-    function created(string $message = 'Resource created successfully') : void {
-        $this->ok(false, $message, statusCode: 201);
+    function created(string $message = 'Resource created successfully', array|null $data = null) : void {
+        $this->completed(false, $message, $data, statusCode: self::STATUS_CODE_CREATED);
     }
     
     /**
@@ -53,8 +79,8 @@ class Json implements IJson {
      * 
      * Returns 202 status code
      */
-    function accepted(string $message = 'Resource accepted successfully') : void {
-        $this->ok(false, $message, statusCode: 202);
+    function accepted(string $message = 'Resource accepted successfully', array|null $data = null) : void {
+        $this->completed(false, $message, $data, statusCode: self::STATUS_CODE_ACCEPTED);
     }
     
     
@@ -63,8 +89,8 @@ class Json implements IJson {
      * 
      * Returns 204 status code
      */
-    function noContent(string $message = 'Resource accepted successfully') : void {
-        $this->ok(false, $message, statusCode: 204);
+    function noContent(string $message = 'Resource accepted successfully', array|null $data = null) : void {
+        $this->completed(false, $message, $data, statusCode: self::STATUS_CODE_NO_CONTENT);
     }
 
      /**
@@ -72,8 +98,8 @@ class Json implements IJson {
      * 
      * Returns 400 status code
      */
-    function badRequest(string $message = 'Bad request.') : void {
-        $this->ok(true, $message, statusCode: 400);
+    function badRequest(string $message = 'Bad request.', array|null $data = null) : void {
+        $this->completed(true, $message, $data, statusCode: self::STATUS_CODE_BAD_REQUEST);
     }
     
      /**
@@ -82,7 +108,7 @@ class Json implements IJson {
      * Returns 401 status code
      */
     function unauthorized(string $message = 'Authorization failed.') : void {
-        $this->ok(true, $message, statusCode: 401);
+        $this->completed(true, $message, statusCode: self::STATUS_CODE_UNAUTHORIZED);
     }
     
     /**
@@ -94,7 +120,7 @@ class Json implements IJson {
      * Returns 403 status code
      */
     function forbidden(string $message = 'Access to that resource is forbidden.') : void {
-        $this->ok(true, $message, statusCode: 403);
+        $this->completed(true, $message, statusCode: self::STATUS_CODE_UNAUTHORIZED);
     }
 
     /**
@@ -103,7 +129,7 @@ class Json implements IJson {
      * Returns 404 status code
      */
     function notFound(string $message = 'Request not found.') : void {
-        $this->ok(true, $message, statusCode: 404);
+        $this->completed(true, $message, statusCode: self::STATUS_CODE_NOT_FOUND);
     }
     
     /**
@@ -113,7 +139,7 @@ class Json implements IJson {
      */
     function methodNotAllowed(string $supportedRequestType) : void {
         $message = Str::toUpper($_SERVER['REQUEST_METHOD']) . " method not allowed. Only a {$supportedRequestType} is supported.";
-        $this->ok(true, $message, statusCode: 405);
+        $this->completed(true, $message, statusCode: self::STATUS_CODE_METHOD_NOT_ALLOWED);
     }
 
     /**
@@ -122,7 +148,7 @@ class Json implements IJson {
      * Returns 415 status code
      */
     function unsupported(string $message = 'Unsupported content type.') : void {
-        $this->ok(true, $message, statusCode: 415);
+        $this->completed(true, $message, statusCode: self::STATUS_CODE_UNSUPPORTED_MEDIA_TYPE);
     }
 
     /**
@@ -131,7 +157,7 @@ class Json implements IJson {
      * Returns 429 status code
      */
     function tooManyRequests(string $message = 'Request not found.') : void {
-        $this->ok(true, $message, statusCode: 429);
+        $this->completed(true, $message, statusCode: self::STATUS_CODE_TOO_MANY_REQUEST);
     }
     
     /**
@@ -139,7 +165,25 @@ class Json implements IJson {
      * 
      * Returns 500 status code.
      */
-    function error(string $message = 'An internal server error occurred.') : void {
-        $this->ok(true, $message, statusCode: 500);
+    function error(string $message = 'An internal server error occurred.', array|null $data = null) : void {
+        $this->completed(true, $message, $data, statusCode: self::STATUS_CODE_INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * Standard response for successful HTTP requests. The actual response will depend on the request method used. 
+     * In a GET request, the response will contain an entity corresponding to the requested resource. 
+     * In a POST request, the response will contain an entity describing or containing the result of the action.
+     */
+    function completed(bool $hasError = false, string $message = '', array|null $data = null, int $statusCode = 200) : void {
+        //http_response_code($statusCode);
+        header($this->_statusCodeMap[$statusCode], response_code: $statusCode);
+
+        try {
+            header('Content-Type: application/json');
+        } catch (\Exception $e) {
+            $this->_logger->error('Error setting Content-Type: application/json: ' . $e->getMessage());
+        }
+        echo json_encode(['hasError' => $hasError, 'message' => $message, 'data' => $data]);
+        exit;
     }
 }

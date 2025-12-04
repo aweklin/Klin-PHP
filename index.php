@@ -21,17 +21,3 @@ session_start();
 
 // bootstrap the app
 require_once(ROOT . DS . 'framework' . DS . 'bootstrap.php');
-
-function convertExceptionToStringForLogging(Exception $exception) : string {
-    $error = 'Error message: ' . $exception->getMessage() . PHP_EOL . 
-        'Line number: ' . strval($exception->getLine()) . PHP_EOL . 
-        'File: ' . $exception->getFile() . PHP_EOL . 
-        'Stack trace: ' . $exception->getTraceAsString() . PHP_EOL;
-
-    return $error;
-}
-
-function getErrorMessage(Exception $exception) : string {
-    $error = (IS_DEVELOPMENT ? $exception->getMessage() : USER_FRIENDLY_ERROR_MESSAGE);
-    return $error;
-}

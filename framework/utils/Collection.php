@@ -14,10 +14,13 @@ use ReflectionClass;
 use Traversable;
 
 /**
- * Represents a strongly typed list of objects that can be accessed by index. Provides various methods to interact with lists.
+ * @inheritdoc
  */
 final class Collection implements ICollection {
 
+    /**
+     * @var T[]
+     */
     private array $_items = [];
 
     public function __construct(array $items = []) {
@@ -30,6 +33,9 @@ final class Collection implements ICollection {
         }
     }
 
+    /**
+     * @inheritdoc
+     */
     public function count(): int {
         if (!$this->_items)
             return 0;
@@ -37,18 +43,34 @@ final class Collection implements ICollection {
         return count($this->_items);
     }
 
-    public function toList() : array {
+    /**
+     * @inheritdoc
+     */
+    public function isEmpty(): bool {
+        return $this->count() == 0;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function all() : array {
         return $this->_items;
     }
 
-    public function first() : mixed {
+    /**
+     * @inheritdoc
+     */
+    public function first() {
         if ($this->count() == 0)
             return null;
 
         return $this->_items[0];
     }
 
-    public function last() : mixed {
+    /**
+     * @inheritdoc
+     */
+    public function last() {
         $numberOfItems = $this->count();
         if ($numberOfItems == 0)
             return null;
@@ -56,7 +78,10 @@ final class Collection implements ICollection {
         return $this->_items[$numberOfItems - 1];
     }
 
-    public function add(mixed $item) : ICollection {
+    /**
+     * @inheritdoc
+     */
+    public function add($item) : ICollection {
         $this->_validateItemType($item);
         
         $this->_items[] = $item;
@@ -64,7 +89,10 @@ final class Collection implements ICollection {
         return $this;
     }
 
-    public function remove(mixed $item) : void {
+    /**
+     * @inheritdoc
+     */
+    public function remove($item) : void {
         $index = $this->getIndexOf($item);
         if ($index == -1)
             throw new ItemNotFoundException('Item not found in the collection.');
@@ -72,27 +100,36 @@ final class Collection implements ICollection {
         unset($this->_items[$index]);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function removeAt(int $index): void {
-        if ($this->elementAt($index))
+        if ($this->getElementAt($index))
             unset($this->_items[$index]);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function merge(ICollection $collection) : array {
         if (!$collection)
             throw new InvalidArgumentException('Collection to merge cannot be empty');
 
         if ($collection->count() == 0)
-            return $this->toList();
+            return $this->all();
 
-        $itemsToMerge = $collection->toList();
+        $itemsToMerge = $collection->all();
         foreach($itemsToMerge as $item) {
             $this->add($item);
         }
 
-        return $this->toList();
+        return $this->all();
     }
 
-    public function contains(mixed $item) : bool {
+    /**
+     * @inheritdoc
+     */
+    public function contains($item) : bool {
         if ($this->count() == 0)
             return false;
 
@@ -101,6 +138,9 @@ final class Collection implements ICollection {
         return in_array($item, $this->_items);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getElementAt(int $index) : mixed {
         if ($this->count() == 0)
             throw new NoItemFoundException('There are no items found in the collection.');
@@ -111,7 +151,10 @@ final class Collection implements ICollection {
         return $this->_items[$index];
     }
 
-    public function getIndexOf(mixed $item) : int {
+    /**
+     * @inheritdoc
+     */
+    public function getIndexOf($item) : int {
         $this->_validateItemType($item);
 
         $count = $this->count();
@@ -121,6 +164,9 @@ final class Collection implements ICollection {
         return array_search($item, $this->_items);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function getIndexByKey(string $key) : int {
         $count = $this->count();
         if ($count == 0)
@@ -140,8 +186,14 @@ final class Collection implements ICollection {
         return -1;
     }
 
-    private function _validateItemType(mixed $item) {
-        if ($this->count() == 0)
+    /**
+     * Verifies that item being compared is the same as the underlying items type.
+     * Throws InvalidArgumentException if the types don't match or throws InvalidOperationException if it doesn't implement the same interface.
+     * 
+     * @param T $item
+     */
+    private function _validateItemType($item) {
+        if ($this->isEmpty())
             return;
 
         $firstItem = $this->_items[0];
@@ -177,10 +229,18 @@ final class Collection implements ICollection {
                 (count($interfaceNames) == 1 ? $interfaceNames[0] : 'one of ' . join(', ', $interfaceNames)));
     }
 
-    private function _getItemType(mixed $item) : string {
+    /**
+     * Returns the underlying type for item
+     * 
+     * @param T
+     */
+    private function _getItemType($item) : string {
         return gettype($item);
     }
 
+    /**
+     * Returns a value, indicating wether the underlying items in an associative array or not.
+     */
     private function _isAssociative() : bool {
         if (array() === $this->_items) return false;
         return array_keys($this->_items) !== range(0, count($this->_items) - 1);        

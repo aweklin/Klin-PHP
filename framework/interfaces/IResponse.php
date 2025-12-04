@@ -10,6 +10,11 @@ namespace Framework\Interfaces;
 interface IResponse {
 
     /**
+     * Specifies the logger to be used by the application
+     */
+    function useLogger(ILogger $logger) : void;
+
+    /**
      * Gets the page title.
      * 
      * @return string
@@ -65,28 +70,6 @@ interface IResponse {
      * @return void
      */
     function view(string $viewName = '');
-
-    /**
-     * Displays json encoded result.
-     * 
-     * @param bool $hasError Sets the hasError to the value passed.
-     * @param string $message Specifies the message sent to the user.
-     * @param array $data Specifies the data to be sent along the json output.
-     * 
-     * @return void
-     */
-    function json(bool $hasError, string $message, array $data = null);
-
-    /**
-     * Removes all HTML tags and displays json encoded result.
-     * 
-     * @param bool $hasError Sets the hasError to the value passed.
-     * @param string $message Specifies the message sent to the user.
-     * @param array $data Specifies the data to be sent along the json output.
-     * 
-     * @return void
-     */
-    function jsonRemoveHTML(bool $hasError, string $message, array $data = []);
 
     /**
      * Redirects user to the specified location, within or outside the app. By default, users are generally redirected to links within the app.

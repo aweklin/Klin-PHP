@@ -1,5 +1,7 @@
 {
     "require": {
-        "phpmailer/phpmailer": "^6.1"
+        "phpmailer/phpmailer": "^6.1",
+        "sendgrid/sendgrid": "^8.1",
+        "firebase/php-jwt": "^6.11"
     }
 }

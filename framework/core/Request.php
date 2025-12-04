@@ -4,6 +4,8 @@ namespace Framework\Core;
 
 use Framework\Core\Validators\ValidationRule;
 use Framework\Core\Validators\Validator;
+use Framework\Enums\RequestType;
+use Framework\Infrastructure\Session;
 use Framework\Interfaces\IRequest;
 use Framework\Utils\{Str, Ary};
 
@@ -14,16 +16,18 @@ use Framework\Utils\{Str, Ary};
  */
 final class Request implements IRequest {
 
-    private $_requestObject = null;
     private $_data = [];
     private $_missingItems = [];
 
     private array $_validations;
     private string $_validationErrors = '';
+    private array $_headers = [];
+    private bool $_removeHtmlFromValidationErrors = false;
 
-    public function __construct() {
+    public function __construct(bool $removeHtmlFromValidationErrors = false) {
         $this->_validations = [];
         $this->_setRequestData();
+        $this->_removeHtmlFromValidationErrors = $removeHtmlFromValidationErrors;
     }
 
     private function _validateRequest() {
@@ -47,7 +51,28 @@ final class Request implements IRequest {
         if ($this->hasMissingItems())
             return $this->getMissingItems();
             
-        return $this->_validationErrors;
+        return $this->_removeHtmlFromValidationErrors
+            ? $this->_stripHTML($this->_validationErrors)
+            : $this->_validationErrors;
+    }
+
+    function stripHtmlFromValidationErrors(bool $removeHtmlFromValidationErrors) : void {
+        $this->_removeHtmlFromValidationErrors = $removeHtmlFromValidationErrors;
+    }
+
+    private function _stripHTML(string $errors) : string {
+        return str_replace(
+            [
+                '<br>', 
+                '<br/>', 
+                '<br />',
+                '<ul class="validation-errors">',
+                '<li>',
+                '</li>',
+                '</ul>'
+            ],
+            '',
+            $errors);
     }
 
     public function hasValidationErrors() : bool {
@@ -61,9 +86,13 @@ final class Request implements IRequest {
      * 
      * @return bool
      */
-    public function isPost(array $expectedItems = []) : bool {        
+    public function isPost(array $expectedItems = []) : bool { 
+        if ($this->getMethod() !== RequestType::post->name) {
+            $this->_methodNotAllowed();
+        }
+
         $this->_validatePayload($expectedItems);
-        return $this->getMethod() === 'post';
+        return true;
     }
 
     /**
@@ -72,7 +101,11 @@ final class Request implements IRequest {
      * @return bool
      */
     public function isGet() : bool {
-        return $this->getMethod() === 'get';
+        if ($this->getMethod() !== RequestType::get->name) {
+            $this->_methodNotAllowed();
+        }
+
+        return true;
     }
 
     /**
@@ -83,8 +116,12 @@ final class Request implements IRequest {
      * @return bool
      */
     public function isPut(array $expectedItems = []) : bool {        
+        if ($this->getMethod() !== RequestType::put->name) {
+            $this->_methodNotAllowed();
+        }
+
         $this->_validatePayload($expectedItems);
-        return $this->getMethod() === 'put';
+        return true;
     }
 
     /**
@@ -93,7 +130,16 @@ final class Request implements IRequest {
      * @return bool
      */
     public function isDelete() : bool {
-        return $this->getMethod() === 'delete';
+        if ($this->getMethod() !== RequestType::delete->name) {
+            $this->_methodNotAllowed();
+        }
+
+        return true;
+    }
+
+    private function _methodNotAllowed() : void {
+        header('Method Not Allowed', true, 405);
+        exit;
     }
 
     /**
@@ -102,16 +148,13 @@ final class Request implements IRequest {
      * @param array $expectedItem Optional. If the expectedItems is passed, it verifies each post item if it contains all the expected keys.
      * @param bool $returnDataAsArray True by default. Determines if the output should be returned as array or object.
      * 
-     * @return mixed
+     * @return array
      */
-    public function getPostedData(array $expectedItem = [], bool $returnDataAsArray = true) {
+    public function getPostedData(array $expectedItem = [], bool $returnDataAsArray = true) : array {
         if ($expectedItem)
-            $this->_checkForMissingItemsInRequest($this->_requestObject, $expectedItem);
+            $this->_checkForMissingItemsInRequest($expectedItem);
 
-        if (!$returnDataAsArray) 
-            return $this->_requestObject;
-        else
-            return $this->_data;
+        return $this->_data;
     }
 
     /**
@@ -124,9 +167,20 @@ final class Request implements IRequest {
     /**
      * Returns a value, indicating wether the post/put request has some missing key(s).
      */
-    public function isValid(array $expectedItems) : bool {
+    public function isValid(array $expectedItems, bool $validateFormToken = true) : bool {
+        if ($validateFormToken) {
+            $formToken = $this->get('form_token');
+            if (Session::get(SECURITY_FORM_TOKEN) === null || !$formToken || $formToken !== Session::get(SECURITY_FORM_TOKEN)) {
+                $this->_validationErrors = 'Invalid form submission. Please refresh the page and try again.';
+                return false;
+            }
+        }
+        
         $this->_validatePayload($expectedItems);
-        return count($this->_missingItems) == 0;
+        $missingItemsCount = count($this->_missingItems);
+        $isValidationErrorsEmpty = Str::isEmpty($this->_validationErrors);
+        $isValid = $missingItemsCount == 0 && $isValidationErrorsEmpty;
+        return $isValid;
     }
 
     /**
@@ -146,7 +200,12 @@ final class Request implements IRequest {
      * 
      * @return mixed
      */
-    public function get(string $key, bool $sanitizeInput = true) {
+    public function get(string $key, bool $sanitizeInput = true, bool $isHeaderKey = false) : mixed {
+        if ($isHeaderKey) {
+            if (!isset($this->_headers[$key])) return null;
+            return $sanitizeInput ? $this->_sanitize($this->_headers[$key]) : $this->_headers[$key];
+        }
+
         if (!$this->_data) return null;
         if (!isset($this->_data[$key])) return null;
 
@@ -187,30 +246,18 @@ final class Request implements IRequest {
      * Sets the request data from POST/PUT for later use.
      */
     private function _setRequestData() {
-        $this->_requestObject = null;
         $this->_data = [];
+        $this->_headers = apache_request_headers();
 
-        $postData = null;
-        if ($this->isPost()) {
-            $postData = json_decode(file_get_contents ('php://input'));//$_POST; // this is probably coming from a form
-        }
-        if ($this->isPut()) {
-            parse_str(file_get_contents('php://input'), $_PUT);
-            foreach($_PUT as $item) {
-                $postData = json_decode($item);
-            }
+        if ($this->getMethod() !== RequestType::get->name) {
+            $this->_data = (array) json_decode(file_get_contents('php://input'), TRUE);
+            return;
         }
         
-        // set the request object
-        $this->_requestObject = $postData;
-
-        if ($this->_requestObject) {            
-            // set the request data [array]
-            $this->_data = [];
-            $this->_convertRequestObjectToArray($this->_requestObject, $this->_data);
-        }
-
-        if (!$this->_data && in_array(Str::toLower($this->getMethod()), ['post', 'put'])) {
+        if (!$this->_data &&
+            in_array(
+                Str::toLower($this->getMethod()), 
+                [RequestType::post->name, RequestType::put->name])) {
             // one last trial
             $this->_data = $_REQUEST;
         }
@@ -233,40 +280,15 @@ final class Request implements IRequest {
      * @param mixed $request The request object being checked.
      * @param array $expectedItems List of the expected array keys from the request object
      */
-    private function _checkForMissingItemsInRequest($request, array $expectedItems) {
+    private function _checkForMissingItemsInRequest(array $expectedItems) {
         $this->_missingItems = [];
 
-        if ($request && $expectedItems) {
-            foreach($expectedItems as $item) {
-                if (\is_array($item) && !isset($request[$item])) {
-                    array_push($this->_missingItems, $item);
-                    continue;
-                }
-                if (\is_object($item) && !isset($request->$item)) {
-                    array_push($this->_missingItems, $item);
-                    continue;
-                }
-                if (!isset($request->$item)) {
-                    array_push($this->_missingItems, $item);
-                    continue;
-                }
-            }
-        }
-    }
-
-    /**
-     * Converts an object request to array.
-     * 
-     * @param mixed $requestObject The request object to convert to array
-     * @param array Passed by ref. The output value.
-     */
-    private function _convertRequestObjectToArray($requestObject, array &$output){
-        if ($requestObject) {
-            foreach($requestObject as $key => $value) {
-                if (is_object($value)) {
-                    return $this->_convertRequestObjectToArray($value, $output);
-                } else {
-                    $output[$key] = $value;
+        if ($expectedItems) {
+            $this->_missingItems = [];
+            $keys = array_keys($this->_data);
+            foreach($expectedItems as $item => $expected) {
+                if (!in_array($expected, $keys)) {
+                    array_push($this->_missingItems, $expected);
                 }
             }
         }
@@ -275,7 +297,7 @@ final class Request implements IRequest {
     private function _validatePayload(array $expectedItems) {
         $fieldsExpected = (!$expectedItems ? [] : (Ary::isAssociative($expectedItems) ? array_keys($expectedItems) : $expectedItems));
         if ($fieldsExpected) {
-            $this->_checkForMissingItemsInRequest($this->_requestObject, $fieldsExpected);
+            $this->_checkForMissingItemsInRequest($fieldsExpected);
             if (Ary::isAssociative($expectedItems)) {
                 foreach ($expectedItems as $key => $value) {
                     array_push($this->_validations, ['field' => $key, 'rules' => $value]);
@@ -286,13 +308,32 @@ final class Request implements IRequest {
     }
 
     /**
+     * Returns the authorization value for this request.
+     * 
+     * @return string|null
+     */
+    function getAuthorizationHeaderValue() : ?string {
+        return $this->get('Authorization', true, true);
+    }
+
+    /**
+     * Returns the content type for this request.
+     * 
+     * @return string|null
+     */
+    function getContentTypeHeaderValue() : ?string {
+        return $this->get('Content-Type', true, true);
+    }
+
+    /**
      * Returns the current page uri
      * 
      * @return string
      */
     public static function getCurrentPage() : string {
         $currentPage = mb_strtolower($_SERVER['REQUEST_URI']);
-        if ($currentPage == mb_strtolower(APP_BASE_URL) || $currentPage == mb_strtolower(APP_BASE_URL . DEFAULT_CONTROLLER . '/' . DEFAULT_ACTION)) {
+        if ($currentPage == mb_strtolower(APP_BASE_URL) ||
+            $currentPage == mb_strtolower(APP_BASE_URL . DEFAULT_CONTROLLER . '/' . DEFAULT_ACTION)) {
             $currentPage = mb_strtolower(APP_BASE_URL . DEFAULT_CONTROLLER);
         }
     
