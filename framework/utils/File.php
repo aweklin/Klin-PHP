@@ -144,4 +144,49 @@ final class File {
         fclose($handle);
     }
 
+    /**
+     * Deletes the file at the specified path.
+     * 
+     * @param string $filePath The path to the file to be deleted.
+     * 
+     * @return bool
+     */
+    public static function delete($filePath): bool {
+        if (file_exists($filePath)) {
+            return unlink($filePath);
+        }
+
+        return false;
+    }
+
+    /**
+     * Reads the content of the file at the specified path.
+     * 
+     * @param string $filePath The path to the file to be read.
+     * 
+     * @return string
+     */
+    public static function read($filePath): string {
+        if (!file_exists($filePath)) {
+            throw new Exception("File at path {$filePath} does not exist.");
+        }
+
+        return file_get_contents($filePath);
+    }
+
+    /**
+     * Renames the file at the specified path.
+     * 
+     * @param string $oldFilePath The current path to the file to be renamed.
+     * @param string $newFilePath The new path to the file after renaming.
+     * 
+     * @return bool
+     */
+    public static function rename($oldFilePath, $newFilePath): bool {
+        if (!file_exists($oldFilePath)) {
+            throw new Exception("File at path {$oldFilePath} does not exist.");
+        }
+        
+        return rename($oldFilePath, $newFilePath);
+    }
 }

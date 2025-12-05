@@ -99,8 +99,8 @@ final class Html {
         $select = '<select id="' . $id . '" name="' . $name . '"' . $selectAttributesResult . '>';
         if ($data) {
             foreach($data as $item) {
-                $text = (is_object($item) ? $item->{$textField} : (is_array($item) && array_key_exists($textField) ? $item[$textField] : $item));
-                $value = (is_object($item) ? $item->{$valueField} : (is_array($item) && array_key_exists($valueField) ? $item[$valueField] : $item));
+                $text = (is_object($item) ? $item->{$textField} : (is_array($item) && array_key_exists($textField, $data) ? $item[$textField] : $item));
+                $value = (is_object($item) ? $item->{$valueField} : (is_array($item) && array_key_exists($valueField, $data) ? $item[$valueField] : $item));
                 $selectedAttribute = ($selected == $value ? ' selected="selected"' : '');
                 $select .= '<option value="' . $value . '"'. $selectedAttribute . '>' . $text . '</option>' . PHP_EOL;
             }
@@ -251,6 +251,18 @@ final class Html {
      */
     public static function partial(string $viewName) {
         include_once PATH_APP_VIEWS_SHARED . DS . $viewName . '.php';
+    }
+
+    /**
+     * Encodes a given URL to make it safe for use in HTML attributes or query strings.
+     * Converts special characters to their URL-encoded equivalents.
+     * 
+     * @param string $url The URL to be encoded.
+     * 
+     * @return string The encoded URL.
+     */
+    public static function encode(string $url) : string {
+        return urlencode($url);
     }
 
 }

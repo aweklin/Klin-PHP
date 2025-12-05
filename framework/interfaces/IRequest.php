@@ -120,4 +120,36 @@ interface IRequest {
      * @return array
      */
     function webService(string $type, string $url, array $parameters = [], array $headers = []) : array;
+
+    /**
+     * Checks if a file was uploaded with the given key.
+     * 
+     * @param string $key Specifies the file key.
+     * 
+     * @return bool
+     */
+    function hasFile(string $key) : bool;
+
+    /**
+     * Checks if the form token is present in the request.
+     * 
+     * @return bool
+     */
+    function hasFormToken() : bool;
+
+    /**
+     * Validates the form token in the request.
+     * 
+     * @return bool
+     */
+    function isFormTokenValid() : bool;
+
+    /**
+     * Returns the uploaded file for the given key.
+     * 
+     * @param string $key Specifies the file key.
+     * 
+     * @return mixed
+     */
+    function getFile(string $key) : mixed;
 }

@@ -24,6 +24,8 @@ final class Request implements IRequest {
     private array $_headers = [];
     private bool $_removeHtmlFromValidationErrors = false;
 
+    private string $_invalidFormTokenMessage = 'Invalid form submission. Please refresh the page and try again.';
+
     public function __construct(bool $removeHtmlFromValidationErrors = false) {
         $this->_validations = [];
         $this->_setRequestData();
@@ -168,12 +170,8 @@ final class Request implements IRequest {
      * Returns a value, indicating wether the post/put request has some missing key(s).
      */
     public function isValid(array $expectedItems, bool $validateFormToken = true) : bool {
-        if ($validateFormToken) {
-            $formToken = $this->get('form_token');
-            if (Session::get(SECURITY_FORM_TOKEN) === null || !$formToken || $formToken !== Session::get(SECURITY_FORM_TOKEN)) {
-                $this->_validationErrors = 'Invalid form submission. Please refresh the page and try again.';
-                return false;
-            }
+        if ($validateFormToken && !$this->isFormTokenValid()) {
+            return false;
         }
         
         $this->_validatePayload($expectedItems);
@@ -181,6 +179,35 @@ final class Request implements IRequest {
         $isValidationErrorsEmpty = Str::isEmpty($this->_validationErrors);
         $isValid = $missingItemsCount == 0 && $isValidationErrorsEmpty;
         return $isValid;
+    }
+
+    /**
+     * Checks if the form token is present in the request.
+     * 
+     * @return bool
+     */
+    public function hasFormToken() : bool {
+        return Session::exists(SECURITY_FORM_TOKEN) && !Str::isEmpty(Session::get(SECURITY_FORM_TOKEN));
+    }
+
+    /**
+     * Validates the form token in the request.
+     * 
+     * @return bool
+     */
+    public function isFormTokenValid() : bool {
+        if (!$this->hasFormToken()) {
+            $this->_validationErrors = $this->_invalidFormTokenMessage;
+            return false;
+        }
+
+        $formToken = $this->get(SECURITY_FORM_TOKEN);
+        if (!$formToken || $formToken !== Session::get(SECURITY_FORM_TOKEN)) {
+            $this->_validationErrors = $this->_invalidFormTokenMessage;
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -243,6 +270,32 @@ final class Request implements IRequest {
     }
 
     /**
+     * Checks if a file was uploaded with the given key.
+     * 
+     * @param string $key Specifies the file key.
+     * 
+     * @return bool
+     */
+    public function hasFile(string $key) : bool {
+        return isset($_FILES[$key]) && $_FILES[$key]['error'] !== UPLOAD_ERR_NO_FILE;
+    }
+
+    /**
+     * Returns the uploaded file for the given key.
+     * 
+     * @param string $key Specifies the file key.
+     * 
+     * @return mixed
+     */
+    function getFile(string $key) : mixed {
+        if (!$this->hasFile($key)) {
+            return null;
+        }
+
+        return $_FILES[$key];
+    }
+
+    /**
      * Sets the request data from POST/PUT for later use.
      */
     private function _setRequestData() {
@@ -250,6 +303,11 @@ final class Request implements IRequest {
         $this->_headers = apache_request_headers();
 
         if ($this->getMethod() !== RequestType::get->name) {
+            if ($_FILES && count($_FILES) > 0) {
+                $this->_data = $_REQUEST;
+                return;
+            }
+
             $this->_data = (array) json_decode(file_get_contents('php://input'), TRUE);
             return;
         }

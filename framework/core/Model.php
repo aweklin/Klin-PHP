@@ -29,6 +29,9 @@ class Model {
     private array $_joins = [];
     private array $_relationships = [];
     protected $_idField = DEFAULT_PRIMARY_FIELD;
+    protected string $_createdDateField = DEFAULT_FIELD_CREATED;
+    protected string $_modifiedDateField = DEFAULT_FIELD_MODIFIED;
+    protected string $_deletedField = DEFAULT_FIELD_DELETED;
 
     protected string $_errorMessage = '';
 
@@ -154,7 +157,7 @@ class Model {
                 }
 
                 // check if soft delete is enabled on the table
-                if ($columnName == DEFAULT_FIELD_DELETED) {
+                if ($columnName == $this->_deletedField) {
                     $this->_isSoftDeleteEnabled = true;
                 }
             }
@@ -363,10 +366,10 @@ class Model {
             $parameters['relationships'] = $this->_relationships;
         }
         if ($excludeDeleted && $this->_isSoftDeleteEnabled) {
-            $deletedClause =  "`" . DEFAULT_FIELD_DELETED . "` != 1";            
+            $deletedClause =  "`" . $this->_deletedField . "` != 1";            
             if (array_key_exists($conditionsParameter, $parameters)) {
                 if (is_array($parameters[$conditionsParameter])) {
-                    if (!in_array(DEFAULT_FIELD_DELETED, $parameters)) {
+                    if (!in_array($this->_deletedField, $parameters)) {
                         array_push($parameters[$conditionsParameter], " AND " . $deletedClause);
                     } else {
                         array_push($parameters[$conditionsParameter],  $deletedClause);
@@ -481,20 +484,20 @@ class Model {
         if ($isInserting) {
 
             // check for default fields and set their values
-            if (!array_key_exists(DEFAULT_FIELD_CREATED, $fields) && property_exists($this, DEFAULT_FIELD_CREATED)) {
-                $fields[DEFAULT_FIELD_CREATED] = Date::now();
+            if (!array_key_exists($this->_createdDateField, $fields) && property_exists($this, $this->_createdDateField)) {
+                $fields[$this->_createdDateField] = Date::now();
             }
-            if (!array_key_exists(DEFAULT_FIELD_MODIFIED, $fields) && property_exists($this, DEFAULT_FIELD_MODIFIED)) {
-                $fields[DEFAULT_FIELD_MODIFIED] = Date::now();
+            if (!array_key_exists($this->_modifiedDateField, $fields) && property_exists($this, $this->_modifiedDateField)) {
+                $fields[$this->_modifiedDateField] = Date::now();
             }
-            if (!array_key_exists(DEFAULT_FIELD_DELETED, $fields) && property_exists($this, DEFAULT_FIELD_DELETED)) {
-                $fields[DEFAULT_FIELD_DELETED] = 0;
+            if (!array_key_exists($this->_deletedField, $fields) && property_exists($this, $this->_deletedField)) {
+                $fields[$this->_deletedField] = 0;
             }
         } else {
             
             // check for default fields and set their values
-            if (!array_key_exists(DEFAULT_FIELD_MODIFIED, $fields) && property_exists($this, DEFAULT_FIELD_MODIFIED)) {
-                $fields[DEFAULT_FIELD_MODIFIED] = Date::now();
+            if (!array_key_exists($this->_modifiedDateField, $fields) && property_exists($this, $this->_modifiedDateField)) {
+                $fields[$this->_modifiedDateField] = Date::now();
             }
         }
 
@@ -523,7 +526,7 @@ class Model {
         } else {
             if ($idValue) {
                 if ($this->_isSoftDeleteEnabled && !$forceDelete) {
-                    $this->save([$this->_idField => $idValue, DEFAULT_FIELD_DELETED => 1]);
+                    $this->save([$this->_idField => $idValue, $this->_deletedField => 1]);
                 } else {
                     $this->database->delete($this->_table, $idValue);
                     $this->_errorMessage = $this->database->getErrorMessage();
