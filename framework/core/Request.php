@@ -88,7 +88,11 @@ final class Request implements IRequest {
      * 
      * @return bool
      */
-    public function isPost(array $expectedItems = []) : bool { 
+    public function isPost(array $expectedItems = [], bool $validateFormToken = true) : bool { 
+        if ($validateFormToken && !$this->isFormTokenValid()) {
+            return false;
+        }
+        
         if ($this->getMethod() !== RequestType::post->name) {
             $this->_methodNotAllowed();
         }
@@ -117,7 +121,11 @@ final class Request implements IRequest {
      * 
      * @return bool
      */
-    public function isPut(array $expectedItems = []) : bool {        
+    public function isPut(array $expectedItems = [], bool $validateFormToken = true) : bool {        
+        if ($validateFormToken && !$this->isFormTokenValid()) {
+            return false;
+        }
+        
         if ($this->getMethod() !== RequestType::put->name) {
             $this->_methodNotAllowed();
         }
@@ -131,7 +139,11 @@ final class Request implements IRequest {
      * 
      * @return bool
      */
-    public function isDelete() : bool {
+    public function isDelete(bool $validateFormToken = true) : bool {
+        if ($validateFormToken && !$this->isFormTokenValid()) {
+            return false;
+        }
+        
         if ($this->getMethod() !== RequestType::delete->name) {
             $this->_methodNotAllowed();
         }

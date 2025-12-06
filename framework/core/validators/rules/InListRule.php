@@ -63,7 +63,7 @@ class InListRule extends RequiredRule {
             }
         }
 
-        $this->errorMessage = sprintf('value: "%u" must be one of %s', $value, implode(', ', $listValues));
+        $this->errorMessage = sprintf('value: "%s" must be one of %s', $value, implode(', ', $listValues));
         return in_array($value, $listValues);
     }
 }

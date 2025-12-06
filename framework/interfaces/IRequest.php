@@ -28,7 +28,7 @@ interface IRequest {
      * 
      * @return bool
      */
-    function isPost(array $expectedItems = []) : bool;
+    function isPost(array $expectedItems = [], bool $validateFormToken = true) : bool;
 
     /**
      * Checks if the request method is get.
@@ -44,14 +44,14 @@ interface IRequest {
      * 
      * @return bool
      */
-    function isPut(array $expectedItems = []) : bool;
+    function isPut(array $expectedItems = [], bool $validateFormToken = true) : bool;
 
     /**
      * Checks if the request method is delete.
      * 
      * @return bool
      */
-    function isDelete() : bool;
+    function isDelete(bool $validateFormToken = true) : bool;
 
     /**
      * Returns the data from post request, with the option of retuning object or array

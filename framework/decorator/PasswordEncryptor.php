@@ -2,7 +2,9 @@
 
 namespace Framework\Decorator;
 
+use Framework\Exceptions\InvalidOperationException;
 use Framework\Interfaces\IPasswordEncryptor;
+use Framework\Interfaces\IPasswordVerifier;
 use Framework\Utils\Str;
 use InvalidArgumentException;
 
@@ -30,4 +32,9 @@ abstract class PasswordEncryptor {
     */
     public abstract function encrypt(string $password): string;    
 
+    public function toVerifier(): IPasswordVerifier {
+        if ($this instanceof IPasswordVerifier) return $this;
+
+        throw new InvalidOperationException("Unable to cast to IPasswordVerifier instance");
+    }
 }

@@ -66,7 +66,7 @@ class Controller {
      * @return void
      */
     private function _validateAuthentication() {
-        if (!User::isLoggedIn()) {
+        if (!User::isLoggedIn($this->logger)) {
             Response::redirect(DEFAULT_CONTROLLER . '/' . DEFAULT_ACTION);
         }
     }

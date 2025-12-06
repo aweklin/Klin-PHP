@@ -171,7 +171,7 @@ class Model {
 
     public function where(string $field, mixed $operatorOrValue, mixed $value = null) : Model {
         if ($value === null) {
-            if (in_array(Str::toLower($operatorOrValue), ['is not', 'is not null'])) {
+            if (in_array(Str::toLower($operatorOrValue), ['is null', 'is not null'])) {
                 array_push($this->_parameters, "{$field} {$operatorOrValue}");
                 return $this;    
             }
