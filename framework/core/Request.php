@@ -314,21 +314,18 @@ final class Request implements IRequest {
         $this->_data = [];
         $this->_headers = apache_request_headers();
 
-        if ($this->getMethod() !== RequestType::get->name) {
-            if ($_FILES && count($_FILES) > 0) {
-                $this->_data = $_REQUEST;
-                return;
-            }
-
-            $this->_data = (array) json_decode(file_get_contents('php://input'), TRUE);
+        if ($this->getMethod() === RequestType::get->name) {
+            $this->_data = $_REQUEST;
             return;
         }
-        
-        if (!$this->_data &&
-            in_array(
-                Str::toLower($this->getMethod()), 
-                [RequestType::post->name, RequestType::put->name])) {
-            // one last trial
+
+        if ($_FILES && count($_FILES) > 0) {
+            $this->_data = $_REQUEST;
+            return;
+        }
+
+        $this->_data = (array) json_decode(file_get_contents('php://input'), TRUE);
+        if (!$this->_data && $_REQUEST) {
             $this->_data = $_REQUEST;
         }
     }

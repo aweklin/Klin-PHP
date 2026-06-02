@@ -28,6 +28,7 @@ class Model {
     private string $_limit = '';
     private array $_joins = [];
     private array $_relationships = [];
+    private array $_selectColumns = [];
     protected $_idField = DEFAULT_PRIMARY_FIELD;
     protected string $_createdDateField = DEFAULT_FIELD_CREATED;
     protected string $_modifiedDateField = DEFAULT_FIELD_MODIFIED;
@@ -269,6 +270,24 @@ class Model {
     }
 
     /**
+     * Selects specific columns to retrieve from the query.
+     * Supports table-qualified column names for use with joins.
+     * 
+     * @param string ...$columns Column names to select. Can use table-qualified format like 'users.full_name' or 'documents.title'
+     * @return Model
+     * 
+     * @example
+     * $users = $user->columns('id', 'username', 'full_name')->fetch();
+     * $joined = $document->join("LEFT JOIN users ON documents.created_by = users.id")
+     *                    ->columns('documents.id', 'documents.title', 'users.full_name', 'users.username')
+     *                    ->fetch();
+     */
+    public function columns(string ...$columns) : Model {
+        $this->_selectColumns = array_merge($this->_selectColumns, $columns);
+        return $this;
+    }
+
+    /**
      * Adds a new relationship to the select result.
      * 
      * @param string $type Specifies relationship type. Must be one of the following: child (i.e: one to one), children (i.e one to many).
@@ -331,7 +350,7 @@ class Model {
         return $this;
     }
 
-    public function limit(int $limit) : Model {
+    public function limit(int|string $limit) : Model {
         $this->_limit = $limit;
 
         return $this;
@@ -365,8 +384,11 @@ class Model {
         if ($this->_relationships) {
             $parameters['relationships'] = $this->_relationships;
         }
+        if ($this->_selectColumns) {
+            $parameters['columns'] = $this->_selectColumns;
+        }
         if ($excludeDeleted && $this->_isSoftDeleteEnabled) {
-            $deletedClause =  "`" . $this->_deletedField . "` != 1";            
+            $deletedClause =  "`{$this->_table}`.`" . $this->_deletedField . "` != 1";
             if (array_key_exists($conditionsParameter, $parameters)) {
                 if (is_array($parameters[$conditionsParameter])) {
                     if (!in_array($this->_deletedField, $parameters)) {
@@ -652,6 +674,7 @@ class Model {
         $this->_order = [];
         $this->_joins = [];
         $this->_relationships = [];
+        $this->_selectColumns = [];
         $this->_limit = '';        
     }
 

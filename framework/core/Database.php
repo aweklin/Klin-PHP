@@ -386,9 +386,10 @@ final class Database implements IDatabase {
         $orderClause    = $this->_getOrderClause($parameters);
         $limitClause    = $this->_getLimitClause($parameters);
         $relationships  = $this->_getRelationships($parameters);
+        $columnsClause  = $this->_getColumnsClause($parameters);
 
         // prepare sql statement
-        $sql = "SELECT * FROM `{$table}`{$joinClause}{$whereClause}{$orderClause}{$limitClause}";
+        $sql = "SELECT {$columnsClause} FROM `{$table}`{$joinClause}{$whereClause}{$orderClause}{$limitClause}";
         if (!$sql) {
             $this->_errorMessage = 'SQL statement is required.';
             if (!IS_DEVELOPMENT) {
@@ -844,10 +845,11 @@ final class Database implements IDatabase {
         $whereClause        = $this->_getWhereClause($parameters);
         $bindable           = $this->_getBindable($parameters);
         $orderClause        = $this->_getOrderClause($parameters);
-        $limitClause    = $this->_getLimitClause($parameters);
+        $limitClause        = $this->_getLimitClause($parameters);
+        $columnsClause      = $this->_getColumnsClause($parameters);
 
         // prepare sql statement
-        $sql = PHP_EOL . "SELECT * FROM `{$table}`{$joinClause}{$whereClause}{$orderClause}{$limitClause}";
+        $sql = PHP_EOL . "SELECT {$columnsClause} FROM `{$table}`{$joinClause}{$whereClause}{$orderClause}{$limitClause}";
         //echo $sql; dnd($bindable);
         // execute and return execution result
         return $this->_execute($sql, $bindable);
@@ -883,6 +885,29 @@ final class Database implements IDatabase {
         }
 
         return $joinClause;
+    }
+
+    private function _getColumnsClause(array $parameters = []) : string {
+        $arrayKeyColumns = 'columns';
+
+        if ($parameters && array_key_exists($arrayKeyColumns, $parameters) && is_array($parameters[$arrayKeyColumns]) && count($parameters[$arrayKeyColumns]) > 0) {
+            $columns = [];
+            foreach($parameters[$arrayKeyColumns] as $column) {
+                // Quote column names: handle both qualified (table.column) and unqualified (column) formats
+                if (strpos($column, '.') !== false) {
+                    // Already qualified, split and quote each part
+                    $parts = explode('.', $column);
+                    $columns[] = '`' . $parts[0] . '`.`' . $parts[1] . '`';
+                } else {
+                    // Unqualified, just quote the column
+                    $columns[] = '`' . $column . '`';
+                }
+            }
+            return implode(', ', $columns);
+        }
+
+        // Default to all columns if none specified
+        return '*';
     }
 
     private function _getWhereClause(array $parameters = []) : string {
